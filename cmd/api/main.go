@@ -11,6 +11,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -143,34 +144,17 @@ func main() {
 		baseURL := os.Getenv("APP_URL")
 		
 		if baseURL == "" {
-			// 2. Jika tidak ada, coba deteksi secara otomatis
-			scheme := "http"
-			// Cek header X-Forwarded-Proto dari Nginx/Proxy
-			if c.Get("X-Forwarded-Proto") == "https" || c.Protocol() == "https" {
-				scheme = "https"
-			}
-			
-			host := c.Hostname()
-			if h, _, err := net.SplitHostPort(host); err == nil {
-				host = h
-			}
-			
-			if host == "localhost" || host == "127.0.0.1" || host == "" {
+			// 2. Jika tidak ada, deteksi secara otomatis menggunakan BaseURL dari request
+			baseURL = c.BaseURL()
+
+			// Jika diakses dari localhost (biasanya oleh browser di mesin server/kiosk),
+			// ganti hostname ke IP Lokal agar HP di jaringan yang sama bisa scan & akses.
+			if strings.Contains(baseURL, "localhost") || strings.Contains(baseURL, "127.0.0.1") {
 				if localIP := getLocalIP(); localIP != "" {
-					host = localIP
+					baseURL = strings.Replace(baseURL, "localhost", localIP, 1)
+					baseURL = strings.Replace(baseURL, "127.0.0.1", localIP, 1)
 				}
 			}
-			
-			port := os.Getenv("PORT")
-			if port == "" {
-				port = "3000"
-			}
-			
-			fullHost := fmt.Sprintf("%s:%s", host, port)
-			if port == "80" || port == "443" {
-				fullHost = host
-			}
-			baseURL = fmt.Sprintf("%s://%s", scheme, fullHost)
 		}
 		
 		trackURL := fmt.Sprintf("%s/track/%s", baseURL, ticketID)
