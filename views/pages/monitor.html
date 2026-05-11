@@ -1,0 +1,242 @@
+<!--
+    File: views/pages/monitor.html (Telah dialihfungsikan menjadi Mobile Live Tracking)
+    Halaman ini di-embed dalam layouts/main.html
+    Dirancang khusus untuk layar HP (Mobile-First)
+-->
+
+<style>
+  /* Override default body agar jika diakses via desktop,
+    tampilannya tetap berbentuk menyerupai frame HP di tengah layar
+  */
+  body {
+    background-color: #e2e8f0; /* Slate 200 untuk luar frame */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+  }
+
+  /* Animasi Ring Berdenyut (Radar effect) saat dipanggil */
+  @keyframes radarPing {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+  .animate-radar::before, .animate-radar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background-color: #3b82f6; /* Blue 500 */
+    z-index: -1;
+    animation: radarPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  .animate-radar::after {
+    animation-delay: 1s;
+  }
+</style>
+
+<!--
+    ===================================================================
+    HTMX SSE (Server-Sent Events) KONEKSI UNTUK HP
+    Koneksi ini spesifik mendengarkan event untuk TicketID murid ini saja.
+    ===================================================================
+-->
+<div
+        hx-ext="sse"
+        sse-connect="/sse/track/{{ .TicketID }}"
+        class="w-full max-w-md bg-slate-50 min-h-screen shadow-2xl relative overflow-hidden flex flex-col"
+>
+
+  <!-- Header Mobile -->
+  <header class="bg-white px-6 py-5 shadow-sm sticky top-0 z-40 rounded-b-3xl">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shrink-0 shadow-md shadow-blue-200">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m0-6l-9-5m9 5l9-5" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold text-slate-800 leading-tight">SPMB SMP N 1 Sragen</h1>
+        <p class="text-sm text-slate-500 font-medium">Live Tracking Antrian</p>
+      </div>
+    </div>
+  </header>
+
+  <!--
+      Main Content (Diupdate otomatis oleh HTMX)
+      Akan me-refresh DOM ini saat halaman diload ATAU saat menerima event 'status_updated'
+  -->
+  <main
+          id="tracking-content"
+          hx-get="/api/track/{{ .TicketID }}/status"
+          hx-trigger="load, sse:status_updated"
+          class="flex-1 px-6 pt-8 flex flex-col items-center pb-10 overflow-y-auto"
+  >
+
+    <!-- Status Label -->
+    <div class="bg-blue-100 text-blue-700 px-5 py-2 rounded-full text-sm font-bold tracking-wide uppercase mb-8 shadow-inner border border-blue-200">
+      Sedang Menunggu Giliran
+    </div>
+
+    <!-- Nomor Antrian Bulat Besar -->
+    <div class="relative w-64 h-64 flex flex-col items-center justify-center mb-10">
+      <div class="absolute inset-0 bg-blue-50 rounded-full shadow-inner border-[8px] border-white z-0"></div>
+
+      <!-- Jika status antrian sedang dipanggil, Go Fiber akan menyelipkan class 'animate-radar' dan 'is-calling' di sini -->
+      <!-- <div class="absolute inset-0 rounded-full animate-radar is-calling"></div> -->
+
+      <div class="relative z-10 flex flex-col items-center">
+        <span class="text-slate-500 font-semibold mb-1">Nomor Anda</span>
+        <span class="text-7xl font-black text-slate-800 tracking-tighter">{{ .QueueNumber }}</span> <!-- Contoh: A-024 -->
+      </div>
+    </div>
+
+    <!-- Info Sisa Antrian & Estimasi -->
+    <div class="w-full bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100 mb-8 relative overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-32 h-32 bg-blue-50 rounded-full opacity-50"></div>
+
+      <div class="flex justify-between items-center mb-6 relative z-10">
+        <div class="text-center flex-1 border-r border-slate-200">
+          <div class="text-3xl font-black text-blue-600 mb-1">{{ .WaitingAhead }}</div> <!-- Contoh: 4 -->
+          <div class="text-xs text-slate-500 font-medium uppercase tracking-wider">Antrian di Depan</div>
+        </div>
+        <div class="text-center flex-1">
+          <div class="text-3xl font-black text-slate-700 mb-1">~{{ .EstimatedMins }}</div> <!-- Contoh: 12 -->
+          <div class="text-xs text-slate-500 font-medium uppercase tracking-wider">Menit (Estimasi)</div>
+        </div>
+      </div>
+
+      <!-- Pesan Instruksi -->
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 flex gap-3 relative z-10">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-sm text-slate-600 font-medium leading-relaxed">
+          Silakan menunggu di area sekolah. Kami akan memberi notifikasi saat giliran Anda tiba.
+        </p>
+      </div>
+    </div>
+
+    <!-- Timeline Perjalanan (Single Ticket System) -->
+    <div class="w-full">
+      <h3 class="text-lg font-bold text-slate-800 mb-6">Tahapan Pendaftaran</h3>
+
+      <div class="relative pl-6 border-l-2 border-slate-200 space-y-8 ml-2">
+
+        <!-- Tahap 1: Ruang Informasi (Selesai) -->
+        <div class="relative">
+          <div class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></div>
+          <h4 class="text-base font-bold text-slate-800">Ruang Informasi</h4>
+          <p class="text-sm text-emerald-600 font-medium mt-1">✓ Selesai diproses</p>
+        </div>
+
+        <!-- Tahap 2: Ruang Akun (Sedang Menunggu - Aktif) -->
+        <div class="relative">
+          <div class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-blue-600 ring-4 ring-blue-100 animate-pulse"></div>
+          <h4 class="text-base font-bold text-blue-700">Ruang Pembuatan Akun</h4>
+          <p class="text-sm text-slate-500 font-medium mt-1">Sedang menunggu giliran...</p>
+        </div>
+
+        <!-- Tahap 3: Ruang Input (Belum) -->
+        <div class="relative">
+          <div class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-slate-200 ring-4 ring-white"></div>
+          <h4 class="text-base font-bold text-slate-400">Ruang Input Data</h4>
+          <p class="text-sm text-slate-400 font-medium mt-1">Tahap selanjutnya</p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Tombol Refresh Manual (Fallback) -->
+  <div class="absolute bottom-6 right-6 z-40">
+    <button onclick="window.location.reload()" class="w-14 h-14 bg-white text-slate-700 rounded-full shadow-lg border border-slate-100 flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    </button>
+  </div>
+
+  <!--
+      =========================================================
+      OVERLAY PANGGILAN LAYAR PENUH
+      Muncul saat HTMX mendeteksi class 'is-calling' dari server
+      =========================================================
+  -->
+  <div id="call-overlay" class="absolute inset-0 bg-blue-600 z-[100] flex-col items-center justify-center hidden opacity-0 transition-opacity duration-500">
+    <div class="relative w-40 h-40 mb-10 flex items-center justify-center">
+      <div class="absolute inset-0 bg-white rounded-full opacity-20 animate-[radarPing_1.5s_infinite]"></div>
+      <div class="absolute inset-4 bg-white rounded-full opacity-40 animate-[radarPing_1.5s_0.5s_infinite]"></div>
+      <div class="relative z-10 w-20 h-20 bg-white text-blue-600 rounded-full flex items-center justify-center shadow-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+      </div>
+    </div>
+
+    <h2 class="text-2xl font-bold text-blue-100 uppercase tracking-widest mb-2">Giliran Anda!</h2>
+    <div class="text-8xl font-black text-white mb-8 tracking-tighter">{{ .QueueNumber }}</div>
+
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-center max-w-[80%]">
+      <p class="text-blue-100 text-sm font-medium uppercase mb-1">Silakan Menuju</p>
+      <p id="target-room" class="text-2xl font-bold text-white">Ruang Pembuatan Akun</p>
+    </div>
+
+    <button onclick="hideCallOverlay()" class="mt-12 bg-white text-blue-600 font-bold py-4 px-10 rounded-full shadow-lg active:scale-95 transition-transform">
+      Saya Mengerti
+    </button>
+  </div>
+
+</div>
+
+<!-- Audio Element (Opsional jika ingin HP berbunyi saat dipanggil) -->
+<audio id="call-sound" src="/assets/bell.mp3" preload="auto"></audio>
+
+<script>
+  // --- Logika Deteksi Panggilan Baru di HP (Via HTMX) ---
+  document.body.addEventListener('htmx:afterSettle', function(evt) {
+    // Jika response dari Go Fiber memiliki class 'is-calling', tampilkan overlay penuh
+    if (evt.target.querySelector('.is-calling')) {
+      showCallOverlay();
+    }
+  });
+
+  function showCallOverlay() {
+    const overlay = document.getElementById('call-overlay');
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex'); // Pakai flexbox untuk memusatkan konten
+
+    // Timeout pendek agar transisi CSS berjalan smooth
+    setTimeout(() => {
+      overlay.classList.remove('opacity-0');
+    }, 50);
+
+    // Getarkan HP menggunakan Vibration API
+    if (navigator.vibrate) {
+      navigator.vibrate([500, 200, 500]);
+    }
+
+    // Mainkan suara bel di HP
+    const audio = document.getElementById('call-sound');
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(e => console.warn("Audio diblokir oleh browser HP:", e));
+    }
+  }
+
+  function hideCallOverlay() {
+    const overlay = document.getElementById('call-overlay');
+    overlay.classList.add('opacity-0');
+    setTimeout(() => {
+      overlay.classList.remove('flex');
+      overlay.classList.add('hidden');
+    }, 500);
+  }
+
+  // --- Simulasi untuk Preview di Canvas (Hapus bagian ini di production) ---
+  // Mensimulasikan pemanggilan nomor setelah 5 detik untuk melihat UI
+  setTimeout(() => {
+    showCallOverlay();
+  }, 5000);
+</script>

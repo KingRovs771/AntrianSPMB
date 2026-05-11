@@ -1,0 +1,116 @@
+<!--
+    File: views/pages/login.html
+    Halaman ini di-embed dalam layouts/main.html
+-->
+
+<!-- Latar Belakang Geometris Khas Instansi -->
+<div class="fixed inset-0 bg-slate-100 z-[-1] overflow-hidden">
+  <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-3xl"></div>
+  <div class="absolute bottom-[10%] -right-[10%] w-[60%] h-[60%] rounded-full bg-indigo-600/10 blur-3xl"></div>
+</div>
+
+<main class="min-h-screen flex items-center justify-center p-6">
+
+  <div class="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-10 relative overflow-hidden">
+
+    <!-- Ornamen Garis Atas -->
+    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+
+    <!-- Logo dan Judul -->
+    <div class="text-center mb-10">
+      <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-800">Sistem Loket SPMB</h1>
+      <p class="text-sm text-slate-500 mt-1">SMP N 1 Sragen</p>
+    </div>
+
+    <!-- Form Login HTMX -->
+    <!--
+        hx-post: Kirim form ke endpoint otentikasi Go Fiber
+        hx-target="#login-error-msg": Jika ada error (misal password salah), pesan error akan muncul di div ini
+        hx-indicator="#login-spinner": Tampilkan loading saat request berlangsung
+    -->
+    <form
+            hx-post="/api/auth/login"
+            hx-target="#login-error-msg"
+            hx-swap="innerHTML"
+            class="space-y-6"
+    >
+
+      <!-- Input Username -->
+      <div>
+        <label for="username" class="block text-sm font-bold text-slate-700 mb-2">Username Petugas</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  required
+                  class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Contoh: budi.loket1"
+          >
+        </div>
+      </div>
+
+      <!-- Input Password -->
+      <div>
+        <label for="password" class="block text-sm font-bold text-slate-700 mb-2">Kata Sandi</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  required
+                  class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="••••••••"
+          >
+        </div>
+      </div>
+
+      <!-- Area untuk Pesan Error (Diisi oleh HTMX dari response server) -->
+      <div id="login-error-msg" class="text-red-500 text-sm font-medium text-center empty:hidden">
+        <!-- Contoh isi jika error: Username atau password salah. -->
+      </div>
+
+      <!-- Tombol Login -->
+      <button
+              type="submit"
+              class="relative w-full flex justify-center items-center py-4 px-4 border border-transparent text-lg font-bold rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg shadow-blue-600/30 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+      >
+        <!-- Teks Normal -->
+        <span class="htmx-indicator-hide">Masuk ke Dashboard</span>
+
+        <!-- Spinner Loading (Muncul saat form dikirim) -->
+        <svg id="login-spinner" class="htmx-indicator animate-spin absolute h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </button>
+
+    </form>
+
+    <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+      <p class="text-xs text-slate-400">© 2026 Tim IT SMP N 1 Sragen</p>
+    </div>
+  </div>
+</main>
+
+<style>
+  /* Menyembunyikan teks tombol saat loading indicator HTMX aktif */
+  .htmx-request .htmx-indicator-hide {
+    opacity: 0;
+  }
+</style>

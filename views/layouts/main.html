@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Judul halaman akan dinamis berdasarkan variabel yang dikirim dari handler Go Fiber -->
+    <title>{{ .Title }} - SPMB SMAN 1 Sragen</title>
+
+    <!-- Tailwind CSS (Gunakan CDN untuk mode pengembangan) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- HTMX Core -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- HTMX SSE Extension (Penting untuk koneksi WebSocket/Server-Sent Events di Monitor TV dan Tracking HP) -->
+    <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
+
+    <!-- Google Fonts: Inter untuk tipografi yang modern dan bersih -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Konfigurasi Global CSS -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent; /* Menghilangkan highlight biru saat tombol ditekan di HP */
+        }
+
+        /* * Animasi Loading Bawaan HTMX
+         * Class ini bisa ditambahkan ke elemen indikator loading (seperti spinner).
+         * HTMX akan otomatis menampilkan elemen ini saat sedang menunggu respon dari server.
+         */
+        .htmx-indicator {
+            opacity: 0;
+            transition: opacity 200ms ease-in;
+            pointer-events: none;
+        }
+        .htmx-request .htmx-indicator {
+            opacity: 1;
+        }
+        .htmx-request.htmx-indicator {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col relative">
+
+<!--
+  =========================================================
+  FIBER EMBED TAG
+  Di sinilah Go Fiber akan menyisipkan konten dari halaman
+  spesifik (kiosk.html, loket.html, monitor.html)
+  =========================================================
+-->
+{{embed}}
+
+<!-- Script Global -->
+<script>
+    // Listener HTMX Global untuk menangani error jaringan atau server error (500)
+    document.body.addEventListener('htmx:responseError', function(evt) {
+        console.error("Terjadi kesalahan:", evt.detail.xhr);
+        // Dalam implementasi nyata, ganti alert ini dengan modal/toast notifikasi UI yang cantik
+        alert("Maaf, terjadi kesalahan komunikasi dengan server. Silakan coba beberapa saat lagi.");
+    });
+
+    // Listener untuk mencetak tiket antrian
+    document.body.addEventListener('printTicket', function(evt) {
+        const printUrl = evt.detail.value;
+        if (printUrl) {
+            // Buka di window baru (popup) yang akan otomatis memicu window.print()
+            const printWindow = window.open(printUrl, 'Cetak Antrian', 'width=400,height=600');
+            if (!printWindow) {
+                alert("Mohon izinkan pop-up untuk mencetak tiket.");
+            }
+        }
+    });
+
+    // Config tambahan untuk Tailwind CDN jika diperlukan kustomisasi tema
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    // Anda bisa menambahkan warna khusus sekolah di sini jika perlu
+                }
+            }
+        }
+    }
+</script>
+</body>
+</html>

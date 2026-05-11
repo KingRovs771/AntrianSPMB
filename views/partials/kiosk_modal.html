@@ -1,0 +1,73 @@
+<!--
+    File: views/partials/kiosk_modal.html
+    Ini adalah partial HTML. Akan di-inject oleh HTMX.
+    Variabel Go Template yang diharapkan:
+    - {{ .QueueNumber }} : String (misal "A-025")
+    - {{ .TicketID }}    : UUID String (untuk tracking QR)
+-->
+
+<div id="modal-container" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <!-- Overlay Background -->
+  <!-- hx-get="/api/kiosk/reset" memungkinkan modal ditutup saat user mengklik background hitam -->
+  <div
+          class="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fade-in"
+          hx-get="/api/kiosk/reset"
+          hx-target="#kiosk-modal"
+          hx-swap="innerHTML"
+  ></div>
+
+  <!-- Modal Content -->
+  <div class="bg-white rounded-[2.5rem] shadow-2xl w-[650px] p-12 text-center relative animate-slide-up z-10">
+
+    <h2 class="text-3xl font-bold text-slate-800 mb-2">Nomor Antrian Anda</h2>
+    <p class="text-slate-500 mb-8 text-lg font-medium">Simpan QR Code atau cetak nomor antrian ini</p>
+
+    <!-- Nomor Antrian Box -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border-4 border-blue-100 rounded-3xl py-10 mb-10 shadow-inner">
+      <span class="text-8xl font-black text-blue-600 tracking-tighter shadow-sm">{{ .QueueNumber }}</span>
+    </div>
+
+    <div class="flex justify-between items-stretch gap-8">
+      <!-- Sisi Kiri: QR Code -->
+      <div class="flex-1 flex flex-col items-center justify-center border-r-2 border-slate-100 pr-8">
+        <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 mb-4">
+          <!-- Gunakan endpoint internal atau library Go (seperti go-qrcode) untuk menggenerate QR image -->
+          <!-- Contoh di bawah mengasumsikan Anda membuat endpoint /api/qr/{ticket_id} yang mengembalikan gambar PNG -->
+          <img src="/api/qr/{{ .TicketID }}" alt="QR Code Antrian" class="w-40 h-40 rounded-lg">
+        </div>
+        <p class="text-sm text-slate-500 font-medium leading-relaxed">Scan menggunakan HP untuk<br>memantau antrian secara live</p>
+      </div>
+
+      <!-- Sisi Kanan: Tombol Aksi -->
+      <div class="flex-1 flex flex-col justify-center gap-4 pl-4">
+
+        <!-- Tombol Cetak Fisik -->
+        <!-- Menjalankan endpoint untuk trigger Thermal Printer via HTMX tanpa mengubah UI -->
+        <button
+                hx-post="/api/queue/print/{{ .TicketID }}"
+                hx-swap="none"
+                onclick="this.innerText='Mencetak...'; setTimeout(() => document.getElementById('btn-tutup-modal').click(), 2000);"
+                class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-5 px-6 rounded-2xl shadow-lg shadow-slate-800/30 text-xl flex items-center justify-center gap-3 transition-transform active:scale-95"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Cetak Kertas
+        </button>
+
+        <!-- Tombol Tutup (Selesai) -->
+        <!-- HTMX memanggil endpoint /reset yang akan mengembalikan string kosong (""), sehingga menghapus isi modal ini -->
+        <button
+                id="btn-tutup-modal"
+                hx-get="/api/kiosk/reset"
+                hx-target="#kiosk-modal"
+                hx-swap="innerHTML"
+                class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-5 px-6 rounded-2xl text-lg transition-colors"
+        >
+          Selesai (Tutup)
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

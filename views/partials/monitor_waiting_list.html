@@ -1,0 +1,51 @@
+<h3 class="text-2xl font-black mb-8 border-b border-slate-700 pb-4 flex justify-between items-center">
+    <span>DAFTAR TUNGGU</span>
+    <span class="text-blue-500 bg-blue-500/10 px-4 py-1 rounded-full text-sm font-bold">{{ .TotalWaiting }} Orang</span>
+</h3>
+
+<div class="space-y-10">
+    <!-- Section Ruang Info -->
+    <div>
+        <div class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            Ruang Informasi
+        </div>
+        <div class="flex flex-wrap gap-3">
+            {{ range .InfoQueue }}
+                <div class="bg-slate-700/50 px-4 py-2 rounded-xl text-lg font-black text-slate-200 border border-slate-600/50">{{ .QueueNumber }}</div>
+            {{ else }}
+                <span class="text-slate-600 text-sm font-bold italic">Kosong</span>
+            {{ end }}
+        </div>
+    </div>
+
+    <!-- Section Ruang Akun -->
+    <div>
+        <div class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Ruang Akun
+        </div>
+        <div class="flex flex-wrap gap-3">
+            {{ range .AccountQueue }}
+                <div class="bg-slate-700/50 px-4 py-2 rounded-xl text-lg font-black text-slate-200 border border-slate-600/50">{{ .QueueNumber }}</div>
+            {{ else }}
+                <span class="text-slate-600 text-sm font-bold italic">Kosong</span>
+            {{ end }}
+        </div>
+    </div>
+
+    <!-- Section Ruang Input -->
+    <div>
+        <div class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            Ruang Verifikasi
+        </div>
+        <div class="flex flex-wrap gap-3">
+            {{ range .InputQueue }}
+                <div class="bg-slate-700/50 px-4 py-2 rounded-xl text-lg font-black text-slate-200 border border-slate-600/50">{{ .QueueNumber }}</div>
+            {{ else }}
+                <span class="text-slate-600 text-sm font-bold italic">Kosong</span>
+            {{ end }}
+        </div>
+    </div>
+</div>

@@ -1,0 +1,20 @@
+{{ range .ActiveCalls }}
+<div class="bg-slate-800 rounded-3xl p-8 border-2 {{ if .Queue }}border-blue-600 shadow-lg shadow-blue-900/20 animate-pulse{{ else }}border-slate-700{{ end }} transition-all">
+    <div class="flex justify-between items-start mb-4">
+        <span class="text-slate-400 font-bold uppercase tracking-wider">{{ .Counter.Name }}</span>
+        <div class="px-3 py-1 rounded-full text-xs font-black uppercase {{ if .Queue }}bg-blue-600 text-white{{ else }}bg-slate-700 text-slate-500{{ end }}">
+            {{ if .Queue }}Memanggil{{ else }}Standby{{ end }}
+        </div>
+    </div>
+    
+    <div class="text-center py-6">
+        {{ if .Queue }}
+            <div class="text-7xl font-black text-white tracking-tighter mb-2">{{ .Queue.QueueNumber }}</div>
+            <div class="text-blue-400 font-bold uppercase tracking-widest text-sm">Segera Menuju Loket</div>
+        {{ else }}
+            <div class="text-5xl font-black text-slate-700 tracking-tighter mb-2">—</div>
+            <div class="text-slate-600 font-bold uppercase tracking-widest text-sm">Menunggu Antrian</div>
+        {{ end }}
+    </div>
+</div>
+{{ end }}

@@ -1,0 +1,97 @@
+<!--
+    File: views/partials/active_call.html
+    Partial ini mengatur tampilan panel operasional utama loket di sebelah kiri.
+    Data yang diharapkan dari Go Fiber:
+    - .CurrentQueue: Objek models.Queue (Jika sedang ada antrian yang dilayani)
+    - .CounterID:    ID Loket (Untuk endpoint API panggilan)
+-->
+
+{{ if .CurrentQueue }}
+<!-- TAMPILAN: JIKA SEDANG MELAYANI MURID -->
+<div class="inline-flex px-4 py-1.5 rounded-full text-sm font-bold bg-blue-100 text-blue-700 w-max mb-6 shadow-sm">
+  Sedang Melayani
+</div>
+
+<div class="flex-1 flex flex-col items-center justify-center animate-fade-in">
+  <p class="text-slate-500 font-medium mb-2">Nomor Antrian</p>
+  <div class="text-8xl font-black text-slate-800 tracking-tighter mb-8 drop-shadow-sm">
+    {{ .CurrentQueue.QueueNumber }}
+  </div>
+
+  <div class="w-full space-y-4">
+    <!-- Tombol Selesai (Mengirim POST untuk memindahkan antrian ke tahap selanjutnya) -->
+    <!-- hx-target menunjuk ke kontainer panel ini sendiri untuk di-replace oleh response (Loket Kosong) -->
+    <button
+            hx-post="/api/counter/{{ .CounterID }}/complete"
+            hx-target="#active-call-panel"
+            class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-5 rounded-2xl shadow-lg shadow-emerald-500/30 text-xl transition-all active:scale-95 flex items-center justify-center gap-2 focus:ring-4 focus:ring-emerald-200"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      Selesai & Lanjut
+    </button>
+
+    <!-- Tombol Panggil Ulang (Speaker TV & HP Murid) -->
+    <div class="grid grid-cols-2 gap-3">
+      <!-- Panggil ke Speaker TV (Monitor Utama) -->
+      <button
+              hx-post="/api/counter/{{ .CounterID }}/recall-tv"
+              hx-swap="none"
+              class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-2xl text-sm transition-all flex flex-col items-center justify-center gap-2 active:scale-95 border border-slate-200"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+        </svg>
+        Panggil Speaker
+      </button>
+
+      <!-- Panggil Notifikasi ke HP Murid -->
+      <button
+              hx-post="/api/counter/{{ .CounterID }}/recall-hp"
+              hx-swap="none"
+              class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-2xl text-sm transition-all flex flex-col items-center justify-center gap-2 active:scale-95 border border-slate-200"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        Panggil HP
+      </button>
+    </div>
+  </div>
+</div>
+
+{{ else }}
+<!-- TAMPILAN: JIKA LOKET SEDANG KOSONG -->
+<div class="inline-flex px-4 py-1.5 rounded-full text-sm font-bold bg-slate-100 text-slate-500 w-max mb-6 border border-slate-200">
+  Loket Kosong
+</div>
+
+<div class="flex-1 flex flex-col items-center justify-center animate-fade-in">
+  <p class="text-slate-400 font-medium mb-2">Menunggu Panggilan</p>
+  <div class="text-8xl font-black text-slate-300 tracking-tighter mb-8">---</div>
+
+  <!-- Tombol Panggil Selanjutnya -->
+  <button
+          hx-post="/api/counter/{{ .CounterID }}/call-next"
+          hx-target="#active-call-panel"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-8 rounded-2xl shadow-xl shadow-blue-600/30 text-2xl transition-all active:scale-95 flex items-center justify-center gap-3 focus:ring-4 focus:ring-blue-300"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+    </svg>
+    Panggil Berikutnya
+  </button>
+</div>
+{{ end }}
+
+<!-- Style ringan untuk transisi halus saat htmx swap -->
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+</style>

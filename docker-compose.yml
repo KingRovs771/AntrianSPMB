@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: antrian_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-antrian_spmb}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: antrian_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-antrian_spmb}?sslmode=disable
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET}
+      - APP_URL=${APP_URL} # Gunakan IP Host Anda di sini (misal: http://192.168.1.10:3000)
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

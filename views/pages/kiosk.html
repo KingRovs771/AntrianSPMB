@@ -1,0 +1,87 @@
+<!--
+    File: views/pages/kiosk.html
+    Halaman ini akan di-render di dalam tag 'embed' pada file views/layouts/main.html
+-->
+
+<!-- Ornamen Background (Hanya Estetika) -->
+<div class="fixed top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-600/10 to-transparent -z-10 pointer-events-none"></div>
+<div class="fixed -top-24 -left-24 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
+<div class="fixed top-48 -right-24 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
+
+<main class="h-screen w-screen flex flex-col items-center justify-center overflow-hidden relative selection:bg-blue-200">
+
+  <!-- Header / Branding Sekolah -->
+  <div class="text-center mb-16 z-10">
+    <!-- Logo Sekolah -->
+    <div class="w-28 h-28 bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-blue-600/30 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m0-6l-9-5m9 5l9-5" />
+      </svg>
+    </div>
+    <h1 class="text-5xl md:text-6xl font-extrabold text-slate-800 tracking-tight mb-4">SPMB SMP N 1 Sragen</h1>
+    <p class="text-2xl text-slate-500 font-medium">Sistem Informasi Antrian Terpadu</p>
+  </div>
+
+  <!-- Tombol Utama Kiosk -->
+  <!--
+      Logika HTMX:
+      1. hx-post="/api/queue/generate" -> Mengirim request POST ke endpoint Go Fiber.
+      2. hx-target="#kiosk-modal" -> Respons HTML dari server akan ditempatkan di dalam elemen ber-ID ini.
+      3. hx-swap="innerHTML" -> Respons akan menggantikan isi dari #kiosk-modal.
+      4. hx-indicator="#loading-spinner" -> (Opsional) Menampilkan spinner saat request berjalan.
+      5. hx-disabled-elt="this" -> Menonaktifkan tombol sementara selama request berlangsung agar tidak di-spam klik.
+  -->
+  <button
+          hx-post="/api/queue/generate"
+          hx-target="#kiosk-modal"
+          hx-swap="innerHTML"
+          hx-indicator="#loading-spinner"
+          hx-disabled-elt="this"
+          class="group relative bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 disabled:opacity-75 disabled:cursor-not-allowed text-white text-4xl font-bold py-8 px-20 rounded-[2rem] shadow-[0_20px_50px_-12px_rgba(37,99,235,0.5)] transition-all duration-300 hover:-translate-y-2 active:translate-y-1 active:shadow-sm z-10"
+  >
+    <div class="absolute inset-0 bg-white/20 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+    <span class="flex items-center gap-4 relative z-10">
+            Ambil Antrian
+      <!-- Ikon Panah -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+      <!-- Indikator Loading HTMX (Awalnya tersembunyi) -->
+            <svg id="loading-spinner" class="htmx-indicator animate-spin -ml-1 mr-3 h-8 w-8 text-white absolute -right-12" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </span>
+  </button>
+
+  <!-- Footer Instruksi -->
+  <div class="absolute bottom-12 text-slate-400 text-xl font-medium tracking-wide">
+    Sentuh tombol di atas untuk mendapatkan nomor antrian Anda
+  </div>
+
+  <!-- ========================================== -->
+  <!-- CONTAINER MODAL HTMX                       -->
+  <!-- Di sinilah partial `kiosk_modal.html` akan disuntikkan oleh server -->
+  <!-- ========================================== -->
+  <div id="kiosk-modal" class="relative z-50"></div>
+
+</main>
+
+<style>
+  /* CSS Animasi untuk Modal saat masuk/muncul */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  .animate-slide-up {
+    animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+</style>

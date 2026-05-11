@@ -1,0 +1,48 @@
+<!--
+    File: views/partials/queue_table.html
+    Partial ini akan di-inject oleh HTMX ke dalam tag <tbody> tabel antrian di dashboard loket.
+    Data yang diharapkan dari Go Fiber:
+    - .QueueList: Slice/Array of models.Queue (Daftar antrian yang statusnya WAITING)
+-->
+{{ range .QueueList }}
+<tr class="hover:bg-slate-50 transition-colors group border-b border-slate-100 last:border-0">
+  <td class="py-4 px-6">
+    <span class="text-xl font-bold text-slate-800">{{ .QueueNumber }}</span>
+  </td>
+  <td class="py-4 px-6">
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200 shadow-sm">
+            Menunggu
+        </span>
+  </td>
+  <td class="py-4 px-6 text-sm text-slate-500 font-medium">
+    <!-- Menampilkan waktu dengan format jam:menit -->
+    {{ .UpdatedAt.Format "15:04" }} WIB
+  </td>
+  <td class="py-4 px-6 text-right">
+    <!-- Tombol Lewati: Mengirim POST request untuk melewati (skip) nomor antrian -->
+    <!-- hx-confirm memberikan dialog peringatan browser bawaan sebelum eksekusi -->
+    <button
+            hx-post="/api/queue/skip/{{ .ID }}"
+            hx-confirm="Yakin ingin melewati antrian {{ .QueueNumber }} karena murid tidak hadir?"
+            class="text-xs font-bold text-slate-400 hover:text-red-600 bg-slate-100 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+    >
+      Lewati
+    </button>
+  </td>
+</tr>
+{{ else }}
+<!-- Tampilan jika .QueueList kosong (tidak ada antrian) -->
+<tr>
+  <td colspan="4" class="py-20 text-center">
+    <div class="flex flex-col items-center justify-center">
+      <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h3 class="text-slate-500 font-bold">Antrian Kosong</h3>
+      <p class="text-slate-400 text-sm mt-1">Belum ada antrian yang masuk ke loket ini.</p>
+    </div>
+  </td>
+</tr>
+{{ end }}

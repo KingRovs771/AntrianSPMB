@@ -1,0 +1,169 @@
+<!--
+    File: views/pages/monitor_tv.html
+    Halaman khusus untuk Monitor TV di ruang tunggu
+-->
+
+<div hx-ext="sse" sse-connect="/sse/monitor" class="min-h-screen bg-slate-900 text-white p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header TV -->
+        <header class="flex justify-between items-center mb-12 border-b border-slate-800 pb-6">
+            <div class="flex items-center gap-6">
+                <div
+                    class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 14l9-5-9-5-9 5 9 5z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m0-6l-9-5m9 5l9-5" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-4xl font-black tracking-tight">ANTRIAN TERPADU</h1>
+                    <p class="text-xl text-slate-400 font-medium uppercase tracking-widest">SPMB SMP NEGERI 1 SRAGEN</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div id="clock" class="text-5xl font-black text-blue-400">00:00:00</div>
+                <div class="text-slate-500 font-bold uppercase tracking-wider">{{ .Title }}</div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-12 gap-8">
+            <!-- Left Side: Active Calls (Grid Loket) -->
+            <div class="col-span-8">
+                <div id="active-calls" hx-get="/api/monitor/active-calls" hx-trigger="load, sse:trigger"
+                    class="grid grid-cols-2 gap-6">
+                    <!-- Will be populated by partials/monitor_active_calls.html -->
+                    <div class="col-span-2 py-20 text-center animate-pulse text-slate-700">
+                        Memuat status loket...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Waiting Lists -->
+            <div class="col-span-4">
+                <div id="waiting-list" hx-get="/api/monitor/waiting-list" hx-trigger="load, sse:trigger"
+                    class="bg-slate-800/50 rounded-3xl p-8 border border-slate-700/50 backdrop-blur-xl">
+                    <!-- Will be populated by partials/monitor_waiting_list.html -->
+                    <div class="py-10 text-center animate-pulse text-slate-700">
+                        Memuat daftar tunggu...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overlay Aktivasi Suara (Wajib untuk Kebijakan Autoplay Browser) -->
+<div id="audio-setup-overlay"
+    class="fixed inset-0 bg-slate-900/95 z-[100] flex items-center justify-center backdrop-blur-sm">
+    <div class="text-center p-12 bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl max-w-lg mx-6">
+        <div
+            class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce shadow-lg shadow-blue-500/20">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+        </div>
+        <h2 class="text-3xl font-black mb-4">Aktifkan Suara</h2>
+        <p class="text-slate-400 text-lg mb-10 font-medium leading-relaxed">
+            Browser memerlukan satu kali interaksi untuk mengizinkan suara otomatis (Panggilan Suara).
+        </p>
+        <button onclick="enableAudio()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl text-xl shadow-xl shadow-blue-600/30 transition-all active:scale-95">
+            AKTIFKAN SEKARANG
+        </button>
+    </div>
+</div>
+
+<script>
+    let audioEnabled = false;
+
+    function enableAudio() {
+        // Firefox dan browser lain: Pastikan SpeechSynthesis diinisialisasi dalam context klik
+        if (window.speechSynthesis) {
+            // Trigger suara kosong untuk inisialisasi
+            const utterance = new SpeechSynthesisUtterance("");
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Trigger suara bel kosong
+        const silent = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFWm1wZSAAc2lsZW5jZSAAAAAAAABiaXRzIHBlciBzYW1wbGUAAAAA');
+        silent.play().then(() => {
+            audioEnabled = true;
+            document.getElementById('audio-setup-overlay').classList.add('hidden');
+            console.log("Audio telah diaktifkan di Firefox/Browser.");
+
+            // Paksa load suara
+            window.speechSynthesis.getVoices();
+        }).catch(e => {
+            console.error("Gagal mengaktifkan audio:", e);
+            alert("Gagal mengaktifkan suara. Pastikan Anda mengizinkan Autoplay di pengaturan Firefox Anda (ikon gembok di sebelah URL).");
+        });
+    }
+
+    // Firefox Fix: Memastikan daftar suara dimuat ulang jika belum ada
+    if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+
+    function updateClock() {
+        const now = new Date();
+        const time = now.toLocaleTimeString('id-ID', { hour12: false });
+        document.getElementById('clock').textContent = time;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Fungsi pembantu untuk mengeja angka dalam Bahasa Indonesia secara alami
+    function terbilang(n) {
+        const bilangan = ["", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "sebelas"];
+        if (n < 12) return bilangan[n];
+        if (n < 20) return terbilang(n - 10) + " belas";
+        if (n < 100) return terbilang(Math.floor(n / 10)) + " puluh " + terbilang(n % 10);
+        if (n < 200) return "seratus " + terbilang(n - 100);
+        if (n < 1000) return terbilang(Math.floor(n / 100)) + " ratus " + terbilang(n % 100);
+        return n.toString().split('').join(' '); // Fallback
+    }
+
+    // Sound & Voice Synthesis (TTS) logic when sse:trigger happens
+    document.body.addEventListener('sse:trigger', function (evt) {
+        if (!audioEnabled) return;
+
+        // 1. Play bell sound
+        const bell = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        bell.play().catch(e => console.log("Audio play blocked", e));
+
+        // 2. Voice Synthesis (TTS)
+        try {
+            const data = JSON.parse(evt.detail.data);
+            if (data && data.queue_number) {
+                setTimeout(() => {
+                    const msg = new SpeechSynthesisUtterance();
+
+                    // Parsing nomor (Contoh: "A-024" -> Huruf: A, Angka: 24)
+                    const parts = data.queue_number.split('-');
+                    const prefix = parts[0] || "";
+                    const numericPart = parseInt(parts[1]) || 0;
+
+                    const textNumber = terbilang(numericPart);
+                    msg.text = `Nomor antrian, ${prefix}, ${textNumber}, silakan menuju, loket ${data.counter_id}`;
+
+                    msg.lang = 'id-ID';
+                    msg.rate = 0.85;
+                    msg.pitch = 1.1;
+
+                    const voices = window.speechSynthesis.getVoices();
+                    const idVoice = voices.find(v => v.lang === 'id-ID' || v.name.includes('Indonesian') || v.name.includes('Google Bahasa Indonesia'));
+                    if (idVoice) msg.voice = idVoice;
+
+                    window.speechSynthesis.speak(msg);
+                }, 1200);
+            }
+        } catch (err) {
+            console.error("Error parsing SSE data for TTS", err);
+        }
+    });
+</script>

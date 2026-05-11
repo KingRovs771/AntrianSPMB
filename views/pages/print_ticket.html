@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cetak Antrian - {{ .Queue.QueueNumber }}</title>
+    <style>
+        /* Pengaturan Khusus Thermal Printer (58mm) */
+        @page {
+            size: 58mm auto;
+            margin: 0;
+        }
+
+        body {
+            width: 58mm;
+            margin: 0;
+            padding: 5mm;
+            font-family: 'Courier New', Courier, monospace;
+            /* Font monospaced agar rapi di thermal */
+            color: black;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .header {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+            border-bottom: 1px dashed black;
+            padding-bottom: 5px;
+        }
+
+        .queue-number {
+            font-size: 40px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .qr-code {
+            margin: 10px auto;
+            width: 40mm;
+            height: 40mm;
+        }
+
+        .footer {
+            margin-top: 10px;
+            border-top: 1px dashed black;
+            padding-top: 5px;
+            font-size: 10px;
+        }
+
+        .timestamp {
+            font-size: 9px;
+            color: #555;
+            margin-top: 5px;
+        }
+
+        /* Sembunyikan saat di layar jika perlu, tapi kita ingin lihat di preview */
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body onload="window.print(); setTimeout(() => window.close(), 500);">
+    <div class="header">
+        SMP NEGERI 1 SRAGEN<br>
+        ANTRIAN SPMB
+    </div>
+
+    <div style="margin-top: 10px;">NOMOR ANTRIAN:</div>
+    <div class="queue-number">{{ .Queue.QueueNumber }}</div>
+
+    <div>SILAKAN SCAN UNTUK TRACKING:</div>
+    <!-- QR Code menggunakan API yang sama dengan Kiosk -->
+    <img src="/api/qr/{{ .Queue.ID }}" class="qr-code" alt="QR Code">
+
+    <div class="footer">
+        Simpan tiket ini untuk<br>proses verifikasi data.<br>
+        Terima Kasih.
+    </div>
+
+    <div class="timestamp">
+        {{ .Queue.CreatedAt.Format "02/01/2006 15:04:05" }}
+    </div>
+
+    <!-- Tombol bantu jika auto-print gagal -->
+    <div class="no-print" style="margin-top: 20px;">
+        <button onclick="window.print()">Cetak Ulang</button>
+        <button onclick="window.close()">Tutup</button>
+    </div>
+</body>
+
+</html>
