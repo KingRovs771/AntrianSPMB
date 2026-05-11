@@ -20,6 +20,7 @@ func SeedAll(db *gorm.DB, ur repository.UserRepository, cr repository.CounterRep
 		{Username: "akun2", FullName: "Petugas Akun 2", Role: models.RoleStaffAccount},
 		{Username: "verif1", FullName: "Petugas Verifikasi 1", Role: models.RoleStaffInput},
 		{Username: "input1", FullName: "Petugas Input Data 1", Role: models.RoleStaffInput},
+		{Username: "admin", FullName: "Administrator Utama", Role: models.RoleAdmin},
 	}
 
 	for _, u := range users {

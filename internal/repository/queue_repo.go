@@ -28,6 +28,8 @@ type QueueRepository interface {
 	// Statistik
 	CountWaiting(step models.Step) (int64, error)
 	CountTotalToday(step models.Step) (int64, error)
+	CountTotalAll() (int64, error)
+	CountToday() (int64, error)
 
 	SearchQueue(step models.Step, query string) ([]models.Queue, error)
 
@@ -210,6 +212,19 @@ func (r *queueRepo) CountTotalToday(step models.Step) (int64, error) {
 	err := r.db.Model(&models.Queue{}).
 		Where("current_step = ? AND created_at >= ?", step, today).
 		Count(&count).Error
+	return count, err
+}
+
+func (r *queueRepo) CountTotalAll() (int64, error) {
+	var count int64
+	err := r.db.Model(&models.Queue{}).Count(&count).Error
+	return count, err
+}
+
+func (r *queueRepo) CountToday() (int64, error) {
+	var count int64
+	today := time.Now().Truncate(24 * time.Hour)
+	err := r.db.Model(&models.Queue{}).Where("created_at >= ?", today).Count(&count).Error
 	return count, err
 }
 

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"AntrianSPMB/internal/models"
 	"AntrianSPMB/internal/services"
 	"fmt"
 	"os"
@@ -51,8 +52,12 @@ func (h *AuthHandler) HandleLogin(c *fiber.Ctx) error {
 		Expires: time.Now().Add(24 * time.Hour),
 	})
 
-	// Redirect HTMX ke dashboard
-	c.Set("HX-Redirect", "/dashboard/loket")
+	// Redirect HTMX ke dashboard sesuai Role
+	if user.Role == models.RoleAdmin {
+		c.Set("HX-Redirect", "/admin/dashboard")
+	} else {
+		c.Set("HX-Redirect", "/dashboard/loket")
+	}
 	return c.SendStatus(fiber.StatusOK)
 }
 
@@ -100,8 +105,20 @@ func AuthMiddleware() fiber.Handler {
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			c.Locals("user_id", claims["id"])
 			c.Locals("username", claims["username"])
+			c.Locals("role", claims["role"])
 		}
 
+		return c.Next()
+	}
+}
+
+// RoleMiddleware membatasi akses berdasarkan role tertentu
+func RoleMiddleware(requiredRole string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		role := c.Locals("role")
+		if role != requiredRole {
+			return c.Status(fiber.StatusForbidden).SendString("Anda tidak memiliki izin untuk mengakses halaman ini.")
+		}
 		return c.Next()
 	}
 }

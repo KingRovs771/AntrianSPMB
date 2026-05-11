@@ -20,6 +20,8 @@ type QueueService interface {
 	// Statistik
 	CountWaiting(step models.Step) (int64, error)
 	CountTotalToday(step models.Step) (int64, error)
+	CountTotalAll() (int64, error)
+	CountToday() (int64, error)
 
 	SearchQueue(step models.Step, query string) ([]models.Queue, error)
 
@@ -139,6 +141,14 @@ func (s *queueService) CountWaiting(step models.Step) (int64, error) {
 
 func (s *queueService) CountTotalToday(step models.Step) (int64, error) {
 	return s.queueRepo.CountTotalToday(step)
+}
+
+func (s *queueService) CountTotalAll() (int64, error) {
+	return s.queueRepo.CountTotalAll()
+}
+
+func (s *queueService) CountToday() (int64, error) {
+	return s.queueRepo.CountToday()
 }
 
 func (s *queueService) SearchQueue(step models.Step, query string) ([]models.Queue, error) {

@@ -23,7 +23,7 @@ func ConnectDatabase() *gorm.DB {
 	// Membaca koneksi dari environment variable (.env)
 	// Kita prioritaskan DATABASE_URL yang biasanya berisi string koneksi lengkap (DSN/URL)
 	dsn := os.Getenv("DATABASE_URL")
-	
+
 	if dsn == "" {
 		// Jika DATABASE_URL tidak ada, coba cek DB_DSN sebagai fallback kedua
 		dsn = os.Getenv("DB_DSN")
@@ -31,7 +31,7 @@ func ConnectDatabase() *gorm.DB {
 
 	if dsn == "" {
 		// Nilai fallback default jika di .env tidak disetel
-		dsn = "host=localhost user=postgres password=rahasia dbname=spmb_antrian port=5432 sslmode=disable TimeZone=Asia/Jakarta"
+		dsn = "host=localhost user=postgres password=yolnDA2623*KingRovs771 dbname=antrian_spmb port=5432 sslmode=disable TimeZone=Asia/Jakarta"
 		log.Println("Peringatan: Variabel DATABASE_URL atau DB_DSN di .env tidak ditemukan, menggunakan nilai default lokal.")
 	}
 

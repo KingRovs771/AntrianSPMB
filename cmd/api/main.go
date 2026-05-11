@@ -43,6 +43,7 @@ func main() {
 	queueService := service.NewQueueService(queueRepo)
 	counterService := service.NewCounterService(counterRepo)
 	authService := service.NewAuthService(userRepo)
+	userService := service.NewUserService(userRepo)
 
 	// 6. Jalankan Seeding Data (Gunakan Seeder terpusat)
 	database.SeedAll(db, userRepo, counterRepo, authService)
@@ -52,6 +53,7 @@ func main() {
 	loketHandler := handler.NewLoketHandler(counterService, queueService, sseManager)
 	monitorHandler := handler.NewMonitorHandler(queueService, counterService)
 	authHandler := handler.NewAuthHandler(authService)
+	adminHandler := handler.NewAdminHandler(userService, queueService)
 
 	// 7. Konfigurasi Template Engine (HTML Render)
 	engine := html.New("./views", ".html")
@@ -131,6 +133,8 @@ func main() {
 	kioskHandler.SetupKioskRoutes(api)
 	loketHandler.SetupLoketRoutes(api)
 	monitorHandler.SetupMonitorRoutes(api)
+	adminHandler.SetupAdminRoutes(app) // Halaman Admin (Web)
+	adminHandler.SetupAdminRoutes(api) // API Admin
 
 	// Auth Routes
 	api.Post("/auth/login", authHandler.HandleLogin)
