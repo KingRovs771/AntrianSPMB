@@ -42,6 +42,7 @@ func (h *AuthHandler) HandleLogin(c *fiber.Ctx) error {
 		Value:    token,
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: true,
+		Path:     "/",
 		// Secure: true, // Aktifkan jika menggunakan HTTPS
 	})
 
@@ -50,6 +51,7 @@ func (h *AuthHandler) HandleLogin(c *fiber.Ctx) error {
 		Name:    "session_user",
 		Value:   user.Username,
 		Expires: time.Now().Add(24 * time.Hour),
+		Path:    "/",
 	})
 
 	// Redirect HTMX ke dashboard sesuai Role
@@ -63,8 +65,20 @@ func (h *AuthHandler) HandleLogin(c *fiber.Ctx) error {
 
 // HandleLogout menghapus cookie jwt
 func (h *AuthHandler) HandleLogout(c *fiber.Ctx) error {
-	c.ClearCookie("jwt_token")
-	c.ClearCookie("session_user")
+	// Hapus cookie dengan path yang sama saat dibuat (root)
+	c.Cookie(&fiber.Cookie{
+		Name:     "jwt_token",
+		Value:    "",
+		Expires:  time.Now().Add(-time.Hour),
+		Path:     "/",
+		HTTPOnly: true,
+	})
+	c.Cookie(&fiber.Cookie{
+		Name:    "session_user",
+		Value:   "",
+		Expires: time.Now().Add(-time.Hour),
+		Path:    "/",
+	})
 	
 	// Jika dipanggil via HTMX, gunakan header khusus untuk redirect halaman penuh
 	if c.Get("HX-Request") != "" {
@@ -97,7 +111,13 @@ func AuthMiddleware() fiber.Handler {
 		})
 
 		if err != nil || !token.Valid {
-			c.ClearCookie("jwt_token")
+			c.Cookie(&fiber.Cookie{
+				Name:     "jwt_token",
+				Value:    "",
+				Expires:  time.Now().Add(-time.Hour),
+				Path:     "/",
+				HTTPOnly: true,
+			})
 			return redirectToLogin(c)
 		}
 

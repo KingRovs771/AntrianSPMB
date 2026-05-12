@@ -74,10 +74,19 @@ func main() {
 
 	// 10. Menyajikan File Statis
 	app.Static("/assets", "./public/assets")
+	app.Static("/favicon.png", "./public/favicon.png")
+	app.Static("/favicon.ico", "./public/favicon.png")
 
 	// ==========================================
 	// 11. ROUTING HALAMAN HTML (WEB VIEWS)
 	// ==========================================
+
+	// Halaman Utama (Landing Page)
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Render("pages/landing", fiber.Map{
+			"Title": "Pilih Layanan",
+		})
+	})
 
 	// Halaman Kiosk
 	app.Get("/kiosk", func(c *fiber.Ctx) error {
@@ -110,6 +119,10 @@ func main() {
 
 	// Halaman Login Petugas
 	app.Get("/login", func(c *fiber.Ctx) error {
+		// Jika sudah login (ada cookie jwt), langsung lempar ke dashboard
+		if c.Cookies("jwt_token") != "" {
+			return c.Redirect("/dashboard/loket")
+		}
 		return c.Render("pages/login", fiber.Map{
 			"Title": "Login Petugas",
 		})
