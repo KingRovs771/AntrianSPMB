@@ -1,0 +1,104 @@
+<!--
+    File: views/pages/panggilan_select.html
+    Layar pemilihan ruangan untuk Monitor Panggilan Suara
+-->
+
+<style>
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-10px); }
+  }
+  .float-anim { animation: float 4s ease-in-out infinite; }
+</style>
+
+<!-- Background Mesh Gradients -->
+<div class="fixed inset-0 -z-10 overflow-hidden bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-100">
+  <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+  <div class="absolute top-20 -right-20 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15"></div>
+  <div class="absolute bottom-0 left-1/3 w-80 h-80 bg-violet-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10"></div>
+</div>
+
+<main class="min-h-screen w-screen flex flex-col items-center justify-center relative px-6 py-12">
+
+  <!-- Back Button -->
+  <a href="/" class="fixed top-8 left-8 flex items-center gap-2 text-slate-400 hover:text-slate-600 transition-colors z-20 font-medium text-sm bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-white/80 shadow-sm hover:shadow">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+    Beranda
+  </a>
+
+  <!-- Header Section -->
+  <div class="text-center mb-16 z-10">
+    <div class="float-anim w-20 h-20 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-purple-500/20">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+      </svg>
+    </div>
+    <h1 class="text-4xl md:text-5xl font-black text-slate-800 tracking-tight mb-3">Panggilan Suara</h1>
+    <p class="text-slate-500 font-medium max-w-xl mx-auto">Silakan pilih ruangan yang ingin Anda tampilkan sebagai monitor panggilan suara terpisah.</p>
+  </div>
+
+  <!-- Room Grid Choices -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full z-10 px-4">
+
+    <!-- Card 1: Ruang Informasi -->
+    <a href="/panggilan?room=INFO_ROOM" class="group block p-1 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 transform hover:-translate-y-2 shadow-xl hover:shadow-2xl">
+      <div class="bg-white rounded-[22px] p-8 h-full flex flex-col items-center text-center">
+        <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+          <span class="text-blue-600 font-black text-xl">I</span>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900 mb-2">Ruang Informasi</h2>
+        <p class="text-slate-500 mb-6 flex-grow text-sm leading-relaxed">
+          Gunakan layar ini untuk memantau dan memanggil antrian di Ruang Informasi (Prefix I).
+        </p>
+        <span class="inline-flex items-center text-blue-600 font-semibold group-hover:translate-x-1 transition-transform">
+          Buka Monitor
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </span>
+      </div>
+    </a>
+
+    <!-- Card 2: Ruang Pembuatan Akun -->
+    <a href="/panggilan?room=ACCOUNT_ROOM" class="group block p-1 rounded-3xl bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 transition-all duration-300 transform hover:-translate-y-2 shadow-xl hover:shadow-2xl">
+      <div class="bg-white rounded-[22px] p-8 h-full flex flex-col items-center text-center">
+        <div class="w-16 h-16 bg-violet-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+          <span class="text-violet-600 font-black text-xl">A</span>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900 mb-2">Pembuatan Akun</h2>
+        <p class="text-slate-500 mb-6 flex-grow text-sm leading-relaxed">
+          Gunakan layar ini untuk memantau dan memanggil antrian di Ruang Pembuatan Akun (Prefix A).
+        </p>
+        <span class="inline-flex items-center text-violet-600 font-semibold group-hover:translate-x-1 transition-transform">
+          Buka Monitor
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </span>
+      </div>
+    </a>
+
+    <!-- Card 3: Ruang Input Data -->
+    <a href="/panggilan?room=INPUT_ROOM" class="group block p-1 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 transform hover:-translate-y-2 shadow-xl hover:shadow-2xl">
+      <div class="bg-white rounded-[22px] p-8 h-full flex flex-col items-center text-center">
+        <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+          <span class="text-emerald-600 font-black text-xl">D</span>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900 mb-2">Input & Verifikasi</h2>
+        <p class="text-slate-500 mb-6 flex-grow text-sm leading-relaxed">
+          Gunakan layar ini untuk memantau dan memanggil antrian di Ruang Input Data & Verifikasi (Prefix D).
+        </p>
+        <span class="inline-flex items-center text-emerald-600 font-semibold group-hover:translate-x-1 transition-transform">
+          Buka Monitor
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </span>
+      </div>
+    </a>
+
+  </div>
+
+</main>

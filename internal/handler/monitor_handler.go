@@ -31,6 +31,8 @@ type ActiveCallData struct {
 // GetActiveCalls mengambil semua loket yang sedang melayani/memanggil (Untuk Monitor TV)
 // GET /api/monitor/active-calls
 func (h *MonitorHandler) GetActiveCalls(c *fiber.Ctx) error {
+	room := c.Query("room") // INFO_ROOM, ACCOUNT_ROOM, INPUT_ROOM, atau kosong
+
 	// 1. Ambil semua loket yang statusnya aktif (Buka)
 	counters, err := h.counterService.GetActiveCounters()
 	if err != nil {
@@ -42,6 +44,11 @@ func (h *MonitorHandler) GetActiveCalls(c *fiber.Ctx) error {
 
 	// 2. Loop setiap loket, cari apakah ada antrian yang sedang di-handle
 	for _, counter := range counters {
+		// Filter berdasarkan ruangan jika di-set
+		if room != "" && string(counter.RoomType) != room {
+			continue
+		}
+
 		queue, _ := h.counterService.GetCurrentActiveCall(counter.ID)
 
 		// Masukkan ke dalam slice (queue bisa bernilai nil jika loket sedang kosong)
@@ -60,12 +67,24 @@ func (h *MonitorHandler) GetActiveCalls(c *fiber.Ctx) error {
 // GetWaitingList mengambil antrian selanjutnya (Untuk Monitor TV)
 // GET /api/monitor/waiting-list
 func (h *MonitorHandler) GetWaitingList(c *fiber.Ctx) error {
+	room := c.Query("room") // INFO_ROOM, ACCOUNT_ROOM, INPUT_ROOM, atau kosong
+
 	// 1. Ambil antrian yang statusnya WAITING untuk masing-masing tahapan ruangan
 	infoQueue, _ := h.queueService.GetWaitingListByRoom(models.StepInfoRoom)
 	accountQueue, _ := h.queueService.GetWaitingListByRoom(models.StepAccountRoom)
 	inputQueue, _ := h.queueService.GetWaitingListByRoom(models.StepInputRoom)
 
-	totalWaiting := len(infoQueue) + len(accountQueue) + len(inputQueue)
+	var totalWaiting int
+	switch room {
+	case "INFO_ROOM":
+		totalWaiting = len(infoQueue)
+	case "ACCOUNT_ROOM":
+		totalWaiting = len(accountQueue)
+	case "INPUT_ROOM":
+		totalWaiting = len(inputQueue)
+	default:
+		totalWaiting = len(infoQueue) + len(accountQueue) + len(inputQueue)
+	}
 
 	// 2. Render partial untuk daftar tunggu
 	return c.Render("partials/monitor_waiting_list", fiber.Map{
@@ -73,6 +92,7 @@ func (h *MonitorHandler) GetWaitingList(c *fiber.Ctx) error {
 		"AccountQueue": accountQueue,
 		"InputQueue":   inputQueue,
 		"TotalWaiting": totalWaiting,
+		"Room":         room,
 	}, "")
 }
 

@@ -1,0 +1,110 @@
+<!--
+    File: views/pages/panggilan.html
+    Halaman Monitor Panggilan Suara khusus untuk 1 ruangan saja
+-->
+
+<style>
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-10px); }
+  }
+  .float-anim { animation: float 4s ease-in-out infinite; }
+</style>
+
+<!-- Background Mesh Gradients -->
+<div class="fixed inset-0 -z-10 overflow-hidden bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-100">
+  <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+  <div class="absolute top-20 -right-20 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15"></div>
+</div>
+
+<main class="min-h-screen w-screen flex flex-col items-center justify-center relative px-6 py-12">
+
+  <!-- Back Button (Kembali ke Pilihan Ruangan Panggilan) -->
+  <a href="/panggilan" class="fixed top-8 left-8 flex items-center gap-2 text-slate-400 hover:text-slate-600 transition-colors z-20 font-medium text-sm bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-white/80 shadow-sm hover:shadow">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+    Pilih Ruangan
+  </a>
+
+  <!-- Header Section -->
+  <div class="text-center mb-10 z-10">
+    <div class="float-anim w-20 h-20 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl {{ if eq .Room "INFO_ROOM" }}bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/20{{ else if eq .Room "ACCOUNT_ROOM" }}bg-gradient-to-br from-violet-500 to-violet-600 shadow-violet-500/20{{ else }}bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-500/20{{ end }}">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+      </svg>
+    </div>
+    <h1 class="text-4xl font-black text-slate-800 tracking-tight mb-2">Monitor Panggilan</h1>
+    <p class="text-slate-500 font-medium">Memantau antrian aktif pada <span class="font-bold {{ if eq .Room "INFO_ROOM" }}text-blue-600{{ else if eq .Room "ACCOUNT_ROOM" }}text-violet-600{{ else }}text-emerald-600{{ end }}">{{ .RoomLabel }}</span></p>
+  </div>
+
+  <!-- Live Queue Status Info (Dynamic HTMX Polling for 1 Room) -->
+  <div 
+    hx-get="/api/panggilan/status?room={{ .Room }}" 
+    hx-trigger="load, every 5s" 
+    hx-swap="innerHTML"
+    class="w-full max-w-xl mb-12 z-10 transition-all"
+  >
+    <!-- Skeleton Loading untuk 1 Panel -->
+    <div class="flex flex-col items-center bg-white/40 border border-white/60 rounded-[2.5rem] p-10 shadow-lg animate-pulse">
+      <div class="w-32 h-8 bg-slate-200/50 rounded-xl mb-6"></div>
+      <div class="w-48 h-20 bg-slate-200/50 rounded-2xl mb-6"></div>
+      <div class="w-40 h-6 bg-slate-200/50 rounded-full mb-10"></div>
+      <div class="w-full h-14 bg-slate-200/50 rounded-xl"></div>
+    </div>
+  </div>
+
+  <!-- Footer Info -->
+  <p class="text-slate-400 text-sm font-medium z-10">
+    Halaman ini memperbarui data secara otomatis setiap 5 detik.
+  </p>
+
+</main>
+
+<!-- TTS Speech Script -->
+<script>
+  function terbilang(n) {
+    const bilangan = ["", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "sebelas"];
+    if (n < 12) return bilangan[n];
+    if (n < 20) return terbilang(n - 10) + " belas";
+    if (n < 100) return terbilang(Math.floor(n / 10)) + " puluh " + terbilang(n % 10);
+    if (n < 200) return "seratus " + terbilang(n - 100);
+    if (n < 1000) return terbilang(Math.floor(n / 100)) + " ratus " + terbilang(n % 100);
+    return n.toString();
+  }
+
+  function speakQueue(queueNumber, roomName) {
+    if (!window.speechSynthesis) {
+      alert("Browser Anda tidak mendukung fitur panggilan suara (Text-to-Speech).");
+      return;
+    }
+
+    // Play calling bell sound
+    const bell = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    bell.play().catch(e => console.log("Audio play blocked by browser policy", e));
+
+    setTimeout(() => {
+      const msg = new SpeechSynthesisUtterance();
+      const parts = queueNumber.split('-');
+      const prefix = parts[0] || "";
+      const numericPart = parseInt(parts[1]) || 0;
+
+      msg.text = `Nomor antrian, ${prefix}, ${terbilang(numericPart)}, silakan menuju, ${roomName}`;
+      msg.lang = 'id-ID';
+      msg.rate = 0.85;
+      msg.pitch = 1.1;
+
+      // Try to find Indonesian voice
+      const voices = window.speechSynthesis.getVoices();
+      const idVoice = voices.find(v => v.lang === 'id-ID' || v.name.includes('Indonesian') || v.name.includes('Google Bahasa Indonesia'));
+      if (idVoice) msg.voice = idVoice;
+
+      window.speechSynthesis.speak(msg);
+    }, 1200);
+  }
+
+  // Initialize voice list when page loads
+  if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  }
+</script>

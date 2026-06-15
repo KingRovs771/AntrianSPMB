@@ -1,0 +1,31 @@
+# =============================================================
+# Dockerfile - Single Stage menggunakan binary yang sudah di-build di host
+# Gunakan ini jika Docker Hub tidak dapat diakses (TLS timeout)
+#
+# Cara build:
+#   1. Build binary di host: go build -o main ./cmd/api/main.go
+#   2. Lalu: docker compose up -d
+# =============================================================
+
+# Gunakan nginx:alpine sebagai base (sudah tersedia di lokal)
+# Alpine yang sama bisa digunakan sebagai runtime Go binary
+FROM nginx:alpine
+
+# Install dependensi runtime
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+
+# Copy binary yang SUDAH di-build di host (via pre-build step)
+COPY main .
+
+# Copy template dan asset statis
+COPY views ./views
+COPY public ./public
+COPY .env ./.env
+
+# Expose port aplikasi
+EXPOSE 3000
+
+# Jalankan binary Go
+CMD ["./main"]

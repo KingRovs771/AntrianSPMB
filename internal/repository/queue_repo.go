@@ -8,17 +8,54 @@ import (
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	// Sesuaikan dengan nama modul Anda di go.mod
-	// "spmb-antrian/internal/models"
 )
 
-// Menggunakan alias untuk mempermudah contoh jika belum ada path import riil
-// Asumsikan models sudah diimport dengan benar
-// import "spmb-antrian/internal/models"
+// stepPrefix memetakan setiap Step (ruangan) ke prefix nomor antrian yang unik.
+// Ini adalah inti dari revisi: setiap ruangan punya seri nomornya sendiri.
+var stepPrefix = map[models.Step]string{
+	models.StepInfoRoom:    "I", // Ruang Informasi    -> I-001, I-002, ...
+	models.StepAccountRoom: "A", // Ruang Pembuatan Akun -> A-001, A-002, ...
+	models.StepInputRoom:   "D", // Ruang Input Data     -> D-001, D-002, ...
+}
+
+// getNextQueueNumber adalah helper internal yang men-generate nomor antrian berikutnya
+// untuk ruangan (step) tertentu dalam satu sesi transaksi database.
+// Fungsi ini HARUS dipanggil dalam sebuah transaction untuk menghindari race condition.
+func getNextQueueNumber(tx *gorm.DB, step models.Step) (string, error) {
+	prefix, ok := stepPrefix[step]
+	if !ok {
+		return "", fmt.Errorf("step '%s' tidak memiliki prefix nomor antrian yang terdefinisi", step)
+	}
+
+	var lastQueue models.Queue
+	today := time.Now().Truncate(24 * time.Hour)
+
+	// Cari nomor terakhir yang dibuat HARI INI untuk ruangan ini (berdasarkan prefix)
+	result := tx.Where("queue_number LIKE ? AND created_at >= ?", prefix+"-%", today).
+		Order("created_at desc").
+		First(&lastQueue)
+
+	var nextNumber int
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// Belum ada antrian untuk ruangan ini hari ini, mulai dari 1
+			nextNumber = 1
+		} else {
+			return "", result.Error
+		}
+	} else {
+		// Parsing format "X-NNN" untuk mendapatkan angka terakhir
+		var lastNum int
+		fmt.Sscanf(lastQueue.QueueNumber, prefix+"-%d", &lastNum)
+		nextNumber = lastNum + 1
+	}
+
+	return fmt.Sprintf("%s-%03d", prefix, nextNumber), nil
+}
 
 // QueueRepository mendefinisikan kontrak fungsi untuk interaksi database Antrian
 type QueueRepository interface {
-	GenerateNewTicket() (*models.Queue, error)
+	GenerateNewTicket(step models.Step) (*models.Queue, error)
 	FindByID(id string) (*models.Queue, error)
 	GetWaitingList(step models.Step) ([]models.Queue, error)
 	CallNext(step models.Step, counterID uint) (*models.Queue, error)
@@ -34,6 +71,7 @@ type QueueRepository interface {
 	SearchQueue(step models.Step, query string) ([]models.Queue, error)
 
 	ResetAll() error
+	GetActiveQueueByRoom(step models.Step) (*models.Queue, error)
 }
 
 type queueRepo struct {
@@ -45,43 +83,22 @@ func NewQueueRepository(db *gorm.DB) QueueRepository {
 	return &queueRepo{db: db}
 }
 
-// GenerateNewTicket membuat tiket antrian baru dengan nomor yang berurutan (A-001, A-002)
-func (r *queueRepo) GenerateNewTicket() (*models.Queue, error) {
+// GenerateNewTicket membuat tiket antrian baru dengan nomor yang berurutan sesuai ruangan (Step)
+func (r *queueRepo) GenerateNewTicket(step models.Step) (*models.Queue, error) {
 	var newQueue models.Queue
 
 	// Gunakan transaction agar penghitungan nomor urut aman jika banyak yang mencetak bersamaan
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		var lastQueue models.Queue
-
-		// Cari nomor antrian terakhir yang dibuat hari ini (berdasarkan created_at)
-		// Memulai dari awal setiap harinya
-		today := time.Now().Truncate(24 * time.Hour)
-		result := tx.Where("created_at >= ?", today).
-			Order("created_at desc").
-			First(&lastQueue)
-
-		var nextNumber int
-		if result.Error != nil {
-			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				// Belum ada antrian hari ini, mulai dari 1
-				nextNumber = 1
-			} else {
-				return result.Error // Error lain dari database
-			}
-		} else {
-			// Skenario nyata: Parsing string "A-024" untuk mendapatkan integer 24 lalu + 1
-			// Untuk penyederhanaan pada contoh ini, kita asumsikan menggunakan ID autoincrement
-			// atau logic parsing string sederhana.
-			// Format "A-%03d" menghasilkan A-001, A-002, dst.
-			var lastNum int
-			fmt.Sscanf(lastQueue.QueueNumber, "A-%d", &lastNum)
-			nextNumber = lastNum + 1
+		// Generate nomor antrian dengan prefix ruangan yang dipilih
+		queueNumber, err := getNextQueueNumber(tx, step)
+		if err != nil {
+			return err
 		}
 
-		// Buat objek queue baru
+		// Buat objek queue baru dengan CurrentStep sesuai step input
 		newQueue = models.Queue{
-			QueueNumber: fmt.Sprintf("A-%03d", nextNumber),
-			CurrentStep: models.StepInfoRoom, // Selalu mulai dari Ruang Informasi
+			QueueNumber: queueNumber,
+			CurrentStep: step,
 			Status:      models.StatusWaiting,
 		}
 
@@ -172,9 +189,17 @@ func (r *queueRepo) UpdateStatus(queue *models.Queue, status models.Status) erro
 }
 
 // MoveToNextStep (Handoff) dipanggil saat petugas menekan tombol "Selesai".
-// Ini akan memindahkan murid ke ruangan (step) berikutnya dan mengembalikan status ke WAITING.
+// Versi baru: Generate nomor antrian BARU sesuai prefix ruangan tujuan.
+// Contoh: murid dari I-003 akan menjadi A-002 saat masuk Ruang Akun.
 func (r *queueRepo) MoveToNextStep(queue *models.Queue, nextStep models.Step) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
+		// Generate nomor antrian baru sesuai ruangan tujuan
+		newQueueNumber, err := getNextQueueNumber(tx, nextStep)
+		if err != nil {
+			return err
+		}
+
+		queue.QueueNumber = newQueueNumber // Nomor antrian berubah sesuai ruangan baru
 		queue.CurrentStep = nextStep
 		queue.Status = models.StatusWaiting
 
@@ -186,7 +211,7 @@ func (r *queueRepo) MoveToNextStep(queue *models.Queue, nextStep models.Step) er
 			return err
 		}
 
-		// Log History
+		// Log History dengan nomor dan step baru
 		history := models.QueueHistory{
 			QueueID: queue.ID,
 			Step:    nextStep,
@@ -243,4 +268,15 @@ func (r *queueRepo) ResetAll() error {
 	return r.db.Model(&models.Queue{}).
 		Where("status IN ?", []models.Status{models.StatusWaiting, models.StatusCalling, models.StatusProcessing}).
 		Update("status", models.StatusSkipped).Error
+}
+
+func (r *queueRepo) GetActiveQueueByRoom(step models.Step) (*models.Queue, error) {
+	var queue models.Queue
+	err := r.db.Where("current_step = ? AND status IN ?", step, []models.Status{models.StatusCalling, models.StatusProcessing}).
+		Order("updated_at desc").
+		First(&queue).Error
+	if err != nil {
+		return nil, err
+	}
+	return &queue, nil
 }

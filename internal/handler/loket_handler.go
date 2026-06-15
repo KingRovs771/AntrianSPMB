@@ -23,10 +23,42 @@ func NewLoketHandler(cs service.CounterService, qs service.QueueService, sm *sse
 	}
 }
 
+// validateCounterStaff memvalidasi apakah petugas yang login memiliki hak akses untuk counterID ini
+func (h *LoketHandler) validateCounterStaff(c *fiber.Ctx, counterID uint) bool {
+	roleVal := c.Locals("role")
+	if roleVal != nil && roleVal.(string) == "ADMIN" {
+		return true
+	}
+
+	counter, err := h.counterService.GetCounterByID(counterID)
+	if err != nil || counter == nil {
+		return false
+	}
+
+	userIDVal := c.Locals("user_id")
+	if userIDVal == nil {
+		return false
+	}
+
+	var userID uint
+	if f, ok := userIDVal.(float64); ok {
+		userID = uint(f)
+	} else if u, ok := userIDVal.(uint); ok {
+		userID = u
+	} else {
+		return false
+	}
+
+	return counter.StaffID != nil && *counter.StaffID == userID
+}
+
 func (h *LoketHandler) GetActiveCall(c *fiber.Ctx) error {
 	counterID := c.Params("id")
-	// asumsikan parsing counterID string ke uint
 	id, _ := strconv.ParseUint(counterID, 10, 32)
+
+	if !h.validateCounterStaff(c, uint(id)) {
+		return c.Status(fiber.StatusForbidden).SendString(`<div class="bg-red-50 text-red-600 p-4 rounded-xl font-bold">Akses ditolak: Anda tidak ditugaskan di loket ini.</div>`)
+	}
 
 	// LOGIKA ASLI:
 	queue, err := h.counterService.GetCurrentActiveCall(uint(id))
@@ -42,13 +74,16 @@ func (h *LoketHandler) GetActiveCall(c *fiber.Ctx) error {
 		"CurrentQueue": queue,
 		"CounterID":    counterID,
 	}, "")
-
 }
 
 func (h *LoketHandler) GetWaitingList(c *fiber.Ctx) error {
-
 	counterID := c.Params("id")
 	id, _ := strconv.ParseUint(counterID, 10, 32)
+
+	if !h.validateCounterStaff(c, uint(id)) {
+		return c.Status(fiber.StatusForbidden).SendString("<tr><td colspan='4' class='p-4 text-center text-red-500 font-bold'>Akses Ditolak</td></tr>")
+	}
+
 	counter, _ := h.counterService.GetCounterByID(uint(id))
 	list, _ := h.queueService.GetWaitingListByRoom(counter.RoomType)
 
@@ -62,10 +97,14 @@ func (h *LoketHandler) CallNext(c *fiber.Ctx) error {
 	log.Printf("Loket %s memanggil antrian selanjutnya...\n", counterID)
 	id, _ := strconv.ParseUint(counterID, 10, 32)
 
+	if !h.validateCounterStaff(c, uint(id)) {
+		return c.Status(fiber.StatusForbidden).SendString(`<div class="bg-red-50 text-red-600 p-4 rounded-xl font-bold">Akses Ditolak</div>`)
+	}
+
 	counter, _ := h.counterService.GetCounterByID(uint(id))
 	queue, err := h.queueService.CallNextCustomer(counter.RoomType, uint(id))
 	if err != nil {
-
+		log.Printf("Gagal memanggil antrian: %v\n", err)
 	}
 
 	c.Set("HX-Trigger", "queueUpdated")
@@ -81,9 +120,14 @@ func (h *LoketHandler) CompleteCall(c *fiber.Ctx) error {
 	log.Printf("Loket %s menyelesaikan pelayanan.\n", counterID)
 	id, _ := strconv.ParseUint(counterID, 10, 32)
 
-	queue, _ := h.counterService.GetCurrentActiveCall(uint(id))
+	if !h.validateCounterStaff(c, uint(id)) {
+		return c.Status(fiber.StatusForbidden).SendString(`<div class="bg-red-50 text-red-600 p-4 rounded-xl font-bold">Akses Ditolak</div>`)
+	}
 
-	h.queueService.FinishCustomerProcess(queue.ID, queue.CurrentStep)
+	queue, _ := h.counterService.GetCurrentActiveCall(uint(id))
+	if queue != nil {
+		h.queueService.FinishCustomerProcess(queue.ID, queue.CurrentStep)
+	}
 
 	return c.Render("partials/active_call", fiber.Map{
 		"CurrentQueue": nil,
@@ -96,6 +140,10 @@ func (h *LoketHandler) RecallTV(c *fiber.Ctx) error {
 	counterID := c.Params("id")
 	log.Printf("Loket %s memanggil ulang di Monitor TV (Speaker).\n", counterID)
 	id, _ := strconv.ParseUint(counterID, 10, 32)
+
+	if !h.validateCounterStaff(c, uint(id)) {
+		return c.SendStatus(fiber.StatusForbidden)
+	}
 
 	queue, _ := h.counterService.GetCurrentActiveCall(uint(id))
 	if queue != nil {
@@ -111,6 +159,10 @@ func (h *LoketHandler) RecallHP(c *fiber.Ctx) error {
 	log.Printf("Loket %s memanggil ulang ke HP Murid.\n", counterID)
 	id, _ := strconv.ParseUint(counterID, 10, 32)
 
+	if !h.validateCounterStaff(c, uint(id)) {
+		return c.SendStatus(fiber.StatusForbidden)
+	}
+
 	queue, _ := h.counterService.GetCurrentActiveCall(uint(id))
 	if queue != nil {
 		// Broadcast ke topik unik tiket tersebut (HP murid)
@@ -124,7 +176,11 @@ func (h *LoketHandler) RecallHP(c *fiber.Ctx) error {
 func (h *LoketHandler) GetCounterStats(c *fiber.Ctx) error {
 	counterID := c.Params("id")
 	id, _ := strconv.ParseUint(counterID, 10, 32)
-	
+
+	if !h.validateCounterStaff(c, uint(id)) {
+		return c.Status(fiber.StatusForbidden).SendString("")
+	}
+
 	counter, _ := h.counterService.GetCounterByID(uint(id))
 	waitingCount, _ := h.queueService.CountWaiting(counter.RoomType)
 	totalToday, _ := h.queueService.CountTotalToday(counter.RoomType)
@@ -140,7 +196,11 @@ func (h *LoketHandler) SearchQueue(c *fiber.Ctx) error {
 	counterID := c.Params("id")
 	query := c.FormValue("search")
 	id, _ := strconv.ParseUint(counterID, 10, 32)
-	
+
+	if !h.validateCounterStaff(c, uint(id)) {
+		return c.Status(fiber.StatusForbidden).SendString("<tr><td colspan='4' class='p-4 text-center text-red-500 font-bold'>Akses Ditolak</td></tr>")
+	}
+
 	counter, _ := h.counterService.GetCounterByID(uint(id))
 	list, _ := h.queueService.SearchQueue(counter.RoomType, query)
 
@@ -155,6 +215,8 @@ func (h *LoketHandler) SkipQueue(c *fiber.Ctx) error {
 	ticketID := c.Params("ticket_id")
 	log.Printf("Melewati tiket antrian: %s\n", ticketID)
 
+	// Validasi apakah tiket ini miliknya / ruangannya jika dibutuhkan (bisa diskip oleh staff manapun atau divalidasi)
+	// Untuk keamanan dasar, biarkan AuthMiddleware membatasi akses ke handler ini secara umum
 	h.queueService.SkipCustomer(ticketID)
 
 	// Trigger tabel untuk refresh
@@ -165,7 +227,9 @@ func (h *LoketHandler) SkipQueue(c *fiber.Ctx) error {
 // ResetQueues menghapus semua data antrian untuk memulai hari baru
 func (h *LoketHandler) ResetQueues(c *fiber.Ctx) error {
 	log.Println("🚨 Permintaan reset seluruh antrian diterima!")
-	
+
+	// Siapa saja petugas yang login berhak melakukan reset (karena tombol reset ada di dashboard petugas)
+
 	err := h.queueService.ResetQueues()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Gagal mereset antrian")
@@ -180,16 +244,18 @@ func (h *LoketHandler) ResetQueues(c *fiber.Ctx) error {
 
 // SetupLoketRoutes meregistrasikan semua endpoint loket ke router
 func (h *LoketHandler) SetupLoketRoutes(router fiber.Router) {
-	// Semua rute ini harusnya dilindungi dengan middleware otentikasi (JWT/Session)
-	router.Get("/counter/:id/current", h.GetActiveCall)
-	router.Get("/counter/:id/queue/waiting", h.GetWaitingList)
-	router.Get("/counter/:id/stats", h.GetCounterStats)
-	router.Post("/counter/:id/queue/search", h.SearchQueue)
-	router.Post("/counter/:id/call-next", h.CallNext)
-	router.Post("/counter/:id/complete", h.CompleteCall)
-	router.Post("/counter/:id/recall-tv", h.RecallTV)
-	router.Post("/counter/:id/recall-hp", h.RecallHP)
+	// Semua rute ini dilindungi dengan middleware otentikasi (JWT/Session)
+	loketGroup := router.Group("/counter/:id", AuthMiddleware())
 
-	router.Post("/queue/skip/:ticket_id", h.SkipQueue)
-	router.Post("/queue/reset", h.ResetQueues)
+	loketGroup.Get("/current", h.GetActiveCall)
+	loketGroup.Get("/queue/waiting", h.GetWaitingList)
+	loketGroup.Get("/stats", h.GetCounterStats)
+	loketGroup.Post("/queue/search", h.SearchQueue)
+	loketGroup.Post("/call-next", h.CallNext)
+	loketGroup.Post("/complete", h.CompleteCall)
+	loketGroup.Post("/recall-tv", h.RecallTV)
+	loketGroup.Post("/recall-hp", h.RecallHP)
+
+	router.Post("/queue/skip/:ticket_id", AuthMiddleware(), h.SkipQueue)
+	router.Post("/queue/reset", AuthMiddleware(), h.ResetQueues)
 }

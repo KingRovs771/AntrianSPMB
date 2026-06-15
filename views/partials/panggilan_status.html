@@ -1,0 +1,63 @@
+<!--
+    File: views/partials/panggilan_status.html
+    Menampilkan status nomor antrian aktif untuk 1 ruangan spesifik di Halaman Panggilan Suara
+-->
+
+<div class="flex flex-col items-center bg-white/60 backdrop-blur-md border border-white/80 rounded-[2.5rem] p-10 shadow-2xl text-center max-w-xl w-full mx-auto transition-all duration-300">
+  
+  <!-- Room Tag -->
+  <div class="inline-flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-white border border-slate-200/60 shadow-sm mb-8">
+    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm shadow-md {{ if eq .Room "INFO_ROOM" }}bg-blue-600 shadow-blue-500/20{{ else if eq .Room "ACCOUNT_ROOM" }}bg-violet-600 shadow-violet-500/20{{ else }}bg-emerald-600 shadow-emerald-500/20{{ end }}">
+      {{ .QueuePrefix }}
+    </div>
+    <span class="text-sm font-bold text-slate-700 tracking-wide">{{ .RoomLabel }}</span>
+  </div>
+
+  <!-- Active Queue Display Label -->
+  <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Antrian Sedang Dilayani</span>
+
+  <!-- Active Queue Number -->
+  <div class="relative my-4 select-none">
+    {{ if ne .ActiveNumber "Belum Ada" }}
+      <h2 class="text-7xl md:text-8xl font-black tracking-tight {{ if eq .Room "INFO_ROOM" }}text-blue-600 drop-shadow-[0_10px_20px_rgba(37,99,235,0.15)]{{ else if eq .Room "ACCOUNT_ROOM" }}text-violet-600 drop-shadow-[0_10px_20px_rgba(124,58,237,0.15)]{{ else }}text-emerald-600 drop-shadow-[0_10px_20px_rgba(5,150,105,0.15)]{{ end }}">
+        {{ .ActiveNumber }}
+      </h2>
+    {{ else }}
+      <h2 class="text-5xl md:text-6xl font-black text-slate-300 tracking-tight py-4">
+        Belum Ada
+      </h2>
+    {{ end }}
+  </div>
+
+  <!-- Waiting Status Badge -->
+  <div class="flex items-center gap-2 mt-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200/40 text-xs font-semibold text-slate-500">
+    <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+    Total Menunggu: <strong class="text-slate-700 font-bold ml-1">{{ .WaitingCount }} Orang</strong>
+  </div>
+
+  <!-- Play Audio / Panggil Suara Button -->
+  <div class="w-full mt-10">
+    {{ if ne .ActiveNumber "Belum Ada" }}
+      <button 
+        onclick="speakQueue('{{ .ActiveNumber }}', '{{ .RoomLabel }}')" 
+        class="group flex items-center justify-center gap-3 w-full py-4 px-6 rounded-[1.5rem] text-white font-extrabold text-lg shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl active:translate-y-0 active:shadow-lg {{ if eq .Room "INFO_ROOM" }}bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-blue-500/25{{ else if eq .Room "ACCOUNT_ROOM" }}bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 shadow-violet-500/25{{ else }}bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-emerald-500/25{{ end }}"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+        </svg>
+        Panggil Suara
+      </button>
+    {{ else }}
+      <button 
+        disabled
+        class="flex items-center justify-center gap-3 w-full py-4 px-6 rounded-[1.5rem] bg-slate-200 text-slate-400 font-extrabold text-lg cursor-not-allowed border border-slate-300/40"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+        </svg>
+        Tidak Ada Panggilan
+      </button>
+    {{ end }}
+  </div>
+
+</div>

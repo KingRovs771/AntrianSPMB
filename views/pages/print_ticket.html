@@ -70,9 +70,6 @@
         ANTRIAN SPMB
     </div>
 
-    <div style="margin-top: 10px;">NOMOR ANTRIAN:</div>
-    <div class="queue-number">{{ .Queue.QueueNumber }}</div>
-
     <div>SILAKAN SCAN UNTUK TRACKING:</div>
     <!-- QR Code menggunakan API yang sama dengan Kiosk -->
     <img src="/api/qr/{{ .Queue.ID }}" class="qr-code" alt="QR Code">

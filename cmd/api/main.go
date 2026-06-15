@@ -4,6 +4,7 @@ import (
 	"AntrianSPMB/config"
 	"AntrianSPMB/internal/database"
 	"AntrianSPMB/internal/handler"
+	"AntrianSPMB/internal/models"
 	"AntrianSPMB/internal/repository"
 	"AntrianSPMB/internal/services"
 	"AntrianSPMB/pkg/sse"
@@ -112,8 +113,72 @@ func main() {
 
 	// Halaman Monitor TV
 	app.Get("/monitor", func(c *fiber.Ctx) error {
+		room := c.Query("room") // INFO_ROOM, ACCOUNT_ROOM, INPUT_ROOM, atau kosong untuk seluruhnya
+		
+		var title string
+		var isSpecificRoom bool
+		var roomLabel string
+		var roomClass string
+		
+		switch room {
+		case "INFO_ROOM":
+			title = "Monitor Ruang Informasi"
+			isSpecificRoom = true
+			roomLabel = "Ruang Informasi"
+			roomClass = "room-info"
+		case "ACCOUNT_ROOM":
+			title = "Monitor Pembuatan Akun"
+			isSpecificRoom = true
+			roomLabel = "Ruang Pembuatan Akun"
+			roomClass = "room-account"
+		case "INPUT_ROOM":
+			title = "Monitor Input Data"
+			isSpecificRoom = true
+			roomLabel = "Ruang Input & Verifikasi Data"
+			roomClass = "room-input"
+		default:
+			title = "Monitor Antrian Utama"
+			isSpecificRoom = false
+			roomLabel = "Semua Ruangan"
+			roomClass = ""
+		}
+
 		return c.Render("pages/monitor_tv", fiber.Map{
-			"Title": "Monitor Antrian",
+			"Title":          title,
+			"Room":           room,
+			"IsSpecificRoom": isSpecificRoom,
+			"RoomLabel":      roomLabel,
+			"RoomClass":      roomClass,
+		})
+	})
+
+	// Halaman Panggilan Suara (Voice Caller Page)
+	app.Get("/panggilan", func(c *fiber.Ctx) error {
+		room := c.Query("room")
+		if room == "" {
+			return c.Render("pages/panggilan_select", fiber.Map{
+				"Title": "Pilih Ruangan Panggilan",
+			})
+		}
+
+		var roomLabel, roomClass, queuePrefix string
+		switch room {
+		case "INFO_ROOM":
+			roomLabel, roomClass, queuePrefix = "Ruang Informasi", "bg-blue-600", "I"
+		case "ACCOUNT_ROOM":
+			roomLabel, roomClass, queuePrefix = "Pembuatan Akun", "bg-violet-600", "A"
+		case "INPUT_ROOM":
+			roomLabel, roomClass, queuePrefix = "Input Data & Verifikasi", "bg-emerald-600", "D"
+		default:
+			return c.Redirect("/panggilan")
+		}
+
+		return c.Render("pages/panggilan", fiber.Map{
+			"Title":       "Panggilan Suara — " + roomLabel,
+			"Room":        room,
+			"RoomLabel":   roomLabel,
+			"RoomClass":   roomClass,
+			"QueuePrefix": queuePrefix,
 		})
 	})
 
@@ -129,13 +194,52 @@ func main() {
 	})
 
 	// Halaman Dashboard Loket (Dilindungi Middleware)
+	// Handler ini akan menentukan Counter mana yang relevan dengan petugas yang login
 	app.Get("/dashboard/loket", handler.AuthMiddleware(), func(c *fiber.Ctx) error {
 		username := c.Cookies("session_user")
+
+		counterID := uint(1) // Default fallback jika tidak ada counter khusus
+
+		// Ambil userID dari Locals (yang diset oleh AuthMiddleware)
+		userIDVal := c.Locals("user_id")
+		if userIDVal != nil {
+			var userID uint
+			if f, ok := userIDVal.(float64); ok {
+				userID = uint(f)
+			} else if u, ok := userIDVal.(uint); ok {
+				userID = u
+			}
+
+			if userID > 0 {
+				var foundCounter models.Counter
+				// Cari loket (counter) di mana staff_id cocok dengan userID
+				if txErr := db.Where("staff_id = ?", userID).First(&foundCounter).Error; txErr == nil {
+					counterID = foundCounter.ID
+				}
+			}
+		}
+
+		counter, err := counterService.GetCounterByID(counterID)
+
+		// Default values jika counter tidak ditemukan
+		counterName := "Dashboard Loket"
+		roomLabel := "Ruang Informasi"
+		roomClass := "room-info"
+		queuePrefix := "I"
+
+		if err == nil {
+			counterName = counter.Name
+			roomLabel, roomClass, queuePrefix = getRoomInfo(string(counter.RoomType))
+		}
+
 		return c.Render("pages/loket", fiber.Map{
-			"Title":       "Dashboard Operasional",
-			"CounterName": "Ruang Pembuatan Akun",
+			"Title":       "Dashboard Operasional — " + roomLabel,
+			"CounterName": counterName,
 			"StaffName":   username,
-			"CounterID":   1,
+			"CounterID":   counterID,
+			"RoomLabel":   roomLabel,
+			"RoomClass":   roomClass,
+			"QueuePrefix": queuePrefix,
 		})
 	})
 
@@ -152,6 +256,75 @@ func main() {
 	// Auth Routes
 	api.Post("/auth/login", authHandler.HandleLogin)
 	api.Post("/auth/logout", authHandler.HandleLogout)
+
+	// Endpoint status antrian halaman utama
+	api.Get("/landing/status", func(c *fiber.Ctx) error {
+		infoActive, _ := queueService.GetActiveQueueByRoom(models.StepInfoRoom)
+		accountActive, _ := queueService.GetActiveQueueByRoom(models.StepAccountRoom)
+		inputActive, _ := queueService.GetActiveQueueByRoom(models.StepInputRoom)
+
+		var infoNoActive string = "Belum Ada"
+		if infoActive != nil {
+			infoNoActive = infoActive.QueueNumber
+		}
+		var accountNoActive string = "Belum Ada"
+		if accountActive != nil {
+			accountNoActive = accountActive.QueueNumber
+		}
+		var inputNoActive string = "Belum Ada"
+		if inputActive != nil {
+			inputNoActive = inputActive.QueueNumber
+		}
+
+		return c.Render("partials/landing_status", fiber.Map{
+			"InfoActive":    infoNoActive,
+			"AccountActive": accountNoActive,
+			"InputActive":   inputNoActive,
+		}, "")
+	})
+
+	// Endpoint status panggilan per ruangan
+	api.Get("/panggilan/status", func(c *fiber.Ctx) error {
+		room := c.Query("room")
+		if room == "" {
+			return c.Status(fiber.StatusBadRequest).SendString("Ruangan tidak dispesifikasikan")
+		}
+
+		var roomLabel, roomClass, queuePrefix string
+		var step models.Step
+		switch room {
+		case "INFO_ROOM":
+			step = models.StepInfoRoom
+			roomLabel, roomClass, queuePrefix = "Ruang Informasi", "bg-blue-600", "I"
+		case "ACCOUNT_ROOM":
+			step = models.StepAccountRoom
+			roomLabel, roomClass, queuePrefix = "Pembuatan Akun", "bg-violet-600", "A"
+		case "INPUT_ROOM":
+			step = models.StepInputRoom
+			roomLabel, roomClass, queuePrefix = "Input Data & Verifikasi", "bg-emerald-600", "D"
+		default:
+			return c.Status(fiber.StatusBadRequest).SendString("Ruangan tidak valid")
+		}
+
+		// Ambil antrian aktif (yang sedang dilayani) untuk ruangan ini
+		active, _ := queueService.GetActiveQueueByRoom(step)
+		var activeNo string = "Belum Ada"
+		if active != nil {
+			activeNo = active.QueueNumber
+		}
+
+		// Hitung jumlah antrian yang sedang menunggu (WAITING)
+		waiting, _ := queueService.CountWaiting(step)
+
+		return c.Render("partials/panggilan_status", fiber.Map{
+			"ActiveNumber": activeNo,
+			"WaitingCount": waiting,
+			"Room":         room,
+			"RoomLabel":    roomLabel,
+			"RoomClass":    roomClass,
+			"QueuePrefix":  queuePrefix,
+		}, "")
+	})
 
 	// --- Endpoint QR Code ---
 	api.Get("/qr/:ticket_id", func(c *fiber.Ctx) error {
@@ -248,4 +421,15 @@ func getLocalIP() string {
 	return ""
 }
 
-
+// getRoomInfo memetakan RoomType (Step) ke data UI: label ramah, CSS class, dan prefix nomor antrian.
+// Ini adalah sumber kebenaran tunggal untuk tampilan warna dan label per ruangan.
+func getRoomInfo(roomType string) (label, cssClass, prefix string) {
+	switch roomType {
+	case "ACCOUNT_ROOM":
+		return "Ruang Pembuatan Akun", "room-account", "A"
+	case "INPUT_ROOM":
+		return "Ruang Input Data", "room-input", "D"
+	default: // INFO_ROOM
+		return "Ruang Informasi", "room-info", "I"
+	}
+}

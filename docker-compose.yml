@@ -1,8 +1,8 @@
-version: '3.8'
+# version: '3.8' # Dihapus karena sudah obsolete di Docker Compose v2+
 
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine  # Menggunakan versi lokal yang tersedia (15 & 16 kompatibel)
     container_name: antrian_db
     restart: always
     environment:

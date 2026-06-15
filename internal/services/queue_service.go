@@ -8,7 +8,7 @@ import (
 
 // QueueService mendefinisikan logika bisnis untuk sistem antrian
 type QueueService interface {
-	CreateTicket() (*models.Queue, error)
+	CreateTicket(step models.Step) (*models.Queue, error)
 	GetStatus(ticketID string) (*models.Queue, error)
 	GetWaitingListByRoom(step models.Step) ([]models.Queue, error)
 
@@ -26,6 +26,7 @@ type QueueService interface {
 	SearchQueue(step models.Step, query string) ([]models.Queue, error)
 
 	ResetQueues() error
+	GetActiveQueueByRoom(step models.Step) (*models.Queue, error)
 }
 
 type queueService struct {
@@ -42,9 +43,9 @@ func NewQueueService(qr repository.QueueRepository) QueueService {
 }
 
 // CreateTicket menangani pembuatan tiket baru saat user memencet Kiosk
-func (s *queueService) CreateTicket() (*models.Queue, error) {
+func (s *queueService) CreateTicket(step models.Step) (*models.Queue, error) {
 	// Panggil repository untuk membuat tiket aman dengan Transaction
-	newQueue, err := s.queueRepo.GenerateNewTicket()
+	newQueue, err := s.queueRepo.GenerateNewTicket(step)
 	if err != nil {
 		return nil, err
 	}
@@ -157,4 +158,8 @@ func (s *queueService) SearchQueue(step models.Step, query string) ([]models.Que
 
 func (s *queueService) ResetQueues() error {
 	return s.queueRepo.ResetAll()
+}
+
+func (s *queueService) GetActiveQueueByRoom(step models.Step) (*models.Queue, error) {
+	return s.queueRepo.GetActiveQueueByRoom(step)
 }

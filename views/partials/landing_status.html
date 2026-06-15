@@ -1,0 +1,77 @@
+<!--
+    File: views/partials/landing_status.html
+    Menampilkan status nomor antrian aktif saat ini per ruangan di Halaman Utama (Landing Page)
+-->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white/60 backdrop-blur-md border border-white/80 rounded-3xl p-6 shadow-xl text-center">
+  <!-- Ruang Informasi -->
+  <div class="flex flex-col items-center p-6 rounded-2xl bg-blue-50/20 border border-blue-100/30 hover:shadow-md transition-shadow">
+    <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-3">
+      <span class="text-blue-700 font-black text-sm">I</span>
+    </div>
+    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Ruang Informasi</span>
+    <span class="text-3xl font-black text-blue-700 mt-2">{{ .InfoActive }}</span>
+    
+    {{ if ne .InfoActive "Belum Ada" }}
+    <!-- Play Audio Button -->
+    <button 
+      onclick="speakQueue('{{ .InfoActive }}', 'Ruang Informasi')" 
+      class="mt-4 flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+      </svg>
+      Panggil Suara
+    </button>
+    {{ else }}
+    <span class="text-slate-400 text-xs italic mt-5">Belum ada panggilan</span>
+    {{ end }}
+  </div>
+
+  <!-- Ruang Pembuatan Akun -->
+  <div class="flex flex-col items-center p-6 rounded-2xl bg-violet-50/20 border border-violet-100/30 hover:shadow-md transition-shadow">
+    <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center mb-3">
+      <span class="text-violet-700 font-black text-sm">A</span>
+    </div>
+    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pembuatan Akun</span>
+    <span class="text-3xl font-black text-violet-700 mt-2">{{ .AccountActive }}</span>
+    
+    {{ if ne .AccountActive "Belum Ada" }}
+    <!-- Play Audio Button -->
+    <button 
+      onclick="speakQueue('{{ .AccountActive }}', 'Ruang Pembuatan Akun')" 
+      class="mt-4 flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-lg shadow-violet-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+      </svg>
+      Panggil Suara
+    </button>
+    {{ else }}
+    <span class="text-slate-400 text-xs italic mt-5">Belum ada panggilan</span>
+    {{ end }}
+  </div>
+
+  <!-- Ruang Input Data -->
+  <div class="flex flex-col items-center p-6 rounded-2xl bg-emerald-50/20 border border-emerald-100/30 hover:shadow-md transition-shadow">
+    <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mb-3">
+      <span class="text-emerald-700 font-black text-sm">D</span>
+    </div>
+    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Input & Verifikasi</span>
+    <span class="text-3xl font-black text-emerald-700 mt-2">{{ .InputActive }}</span>
+    
+    {{ if ne .InputActive "Belum Ada" }}
+    <!-- Play Audio Button -->
+    <button 
+      onclick="speakQueue('{{ .InputActive }}', 'Ruang Input Data')" 
+      class="mt-4 flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+      </svg>
+      Panggil Suara
+    </button>
+    {{ else }}
+    <span class="text-slate-400 text-xs italic mt-5">Belum ada panggilan</span>
+    {{ end }}
+  </div>
+</div>

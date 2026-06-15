@@ -1,51 +1,104 @@
-<h3 class="text-2xl font-black mb-8 border-b border-slate-700 pb-4 flex justify-between items-center">
-    <span>DAFTAR TUNGGU</span>
-    <span class="text-blue-500 bg-blue-500/10 px-4 py-1 rounded-full text-sm font-bold">{{ .TotalWaiting }} Orang</span>
-</h3>
+<!--
+    File: views/partials/monitor_waiting_list.html
+    Panel daftar tunggu untuk Monitor TV — dengan warna khas per ruangan
+-->
 
-<div class="space-y-10">
-    <!-- Section Ruang Info -->
-    <div>
-        <div class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-            Ruang Informasi
-        </div>
-        <div class="flex flex-wrap gap-3">
-            {{ range .InfoQueue }}
-                <div class="bg-slate-700/50 px-4 py-2 rounded-xl text-lg font-black text-slate-200 border border-slate-600/50">{{ .QueueNumber }}</div>
-            {{ else }}
-                <span class="text-slate-600 text-sm font-bold italic">Kosong</span>
-            {{ end }}
-        </div>
-    </div>
+<!-- Header Panel -->
+<div class="flex justify-between items-center mb-8">
+  <h3 class="text-2xl font-black text-white tracking-tight">Daftar Tunggu</h3>
+  <span class="bg-blue-500/20 border border-blue-500/30 text-blue-300 px-4 py-1.5 rounded-full text-sm font-bold">
+    {{ .TotalWaiting }} Antrian
+  </span>
+</div>
 
-    <!-- Section Ruang Akun -->
-    <div>
-        <div class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            Ruang Akun
-        </div>
-        <div class="flex flex-wrap gap-3">
-            {{ range .AccountQueue }}
-                <div class="bg-slate-700/50 px-4 py-2 rounded-xl text-lg font-black text-slate-200 border border-slate-600/50">{{ .QueueNumber }}</div>
-            {{ else }}
-                <span class="text-slate-600 text-sm font-bold italic">Kosong</span>
-            {{ end }}
-        </div>
-    </div>
+<div class="space-y-8">
 
-    <!-- Section Ruang Input -->
-    <div>
-        <div class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-            Ruang Verifikasi
-        </div>
-        <div class="flex flex-wrap gap-3">
-            {{ range .InputQueue }}
-                <div class="bg-slate-700/50 px-4 py-2 rounded-xl text-lg font-black text-slate-200 border border-slate-600/50">{{ .QueueNumber }}</div>
-            {{ else }}
-                <span class="text-slate-600 text-sm font-bold italic">Kosong</span>
-            {{ end }}
-        </div>
+  {{ if or (eq .Room "") (eq .Room "INFO_ROOM") }}
+  <!-- Ruang Informasi (Seri I) -->
+  <div>
+    <div class="flex items-center gap-2.5 mb-4">
+      <div class="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+        <span class="text-blue-400 font-black text-xs">I</span>
+      </div>
+      <p class="text-xs font-black text-blue-400 uppercase tracking-[0.2em]">Ruang Informasi</p>
     </div>
+    <div class="flex flex-wrap gap-2">
+      {{ range .InfoQueue }}
+        <div class="bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 px-4 py-2 rounded-xl text-lg font-black text-blue-200 transition-colors">
+          {{ .QueueNumber }}
+        </div>
+      {{ else }}
+        <span class="text-slate-600 text-sm font-semibold italic flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Bersih
+        </span>
+      {{ end }}
+    </div>
+  </div>
+  {{ end }}
+
+  {{ if and (eq .Room "") (or (gt (len .InfoQueue) 0) (gt (len .AccountQueue) 0)) }}
+  <!-- Divider -->
+  <div class="border-t border-slate-700/50"></div>
+  {{ end }}
+
+  {{ if or (eq .Room "") (eq .Room "ACCOUNT_ROOM") }}
+  <!-- Ruang Pembuatan Akun (Seri A) -->
+  <div>
+    <div class="flex items-center gap-2.5 mb-4">
+      <div class="w-7 h-7 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center shrink-0">
+        <span class="text-violet-400 font-black text-xs">A</span>
+      </div>
+      <p class="text-xs font-black text-violet-400 uppercase tracking-[0.2em]">Ruang Pembuatan Akun</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {{ range .AccountQueue }}
+        <div class="bg-violet-500/10 border border-violet-500/20 hover:bg-violet-500/20 px-4 py-2 rounded-xl text-lg font-black text-violet-200 transition-colors">
+          {{ .QueueNumber }}
+        </div>
+      {{ else }}
+        <span class="text-slate-600 text-sm font-semibold italic flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Bersih
+        </span>
+      {{ end }}
+    </div>
+  </div>
+  {{ end }}
+
+  {{ if and (eq .Room "") (or (gt (len .AccountQueue) 0) (gt (len .InputQueue) 0)) }}
+  <!-- Divider -->
+  <div class="border-t border-slate-700/50"></div>
+  {{ end }}
+
+  {{ if or (eq .Room "") (eq .Room "INPUT_ROOM") }}
+  <!-- Ruang Input Data (Seri D) -->
+  <div>
+    <div class="flex items-center gap-2.5 mb-4">
+      <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+        <span class="text-emerald-400 font-black text-xs">D</span>
+      </div>
+      <p class="text-xs font-black text-emerald-400 uppercase tracking-[0.2em]">Ruang Input Data</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {{ range .InputQueue }}
+        <div class="bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 px-4 py-2 rounded-xl text-lg font-black text-emerald-200 transition-colors">
+          {{ .QueueNumber }}
+        </div>
+      {{ else }}
+        <span class="text-slate-600 text-sm font-semibold italic flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Bersih
+        </span>
+      {{ end }}
+    </div>
+  </div>
+  {{ end }}
+
 </div>

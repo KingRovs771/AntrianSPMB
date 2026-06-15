@@ -1,20 +1,62 @@
+<!--
+    File: views/partials/monitor_active_calls.html
+    Ditampilkan di Monitor TV — Grid Loket Aktif dengan warna per ruangan
+-->
 {{ range .ActiveCalls }}
-<div class="bg-slate-800 rounded-3xl p-8 border-2 {{ if .Queue }}border-blue-600 shadow-lg shadow-blue-900/20 animate-pulse{{ else }}border-slate-700{{ end }} transition-all">
-    <div class="flex justify-between items-start mb-4">
-        <span class="text-slate-400 font-bold uppercase tracking-wider">{{ .Counter.Name }}</span>
-        <div class="px-3 py-1 rounded-full text-xs font-black uppercase {{ if .Queue }}bg-blue-600 text-white{{ else }}bg-slate-700 text-slate-500{{ end }}">
-            {{ if .Queue }}Memanggil{{ else }}Standby{{ end }}
+<div class="relative overflow-hidden rounded-3xl border-2 transition-all duration-500
+  {{ if .Queue }}
+    border-blue-500 bg-gradient-to-br from-blue-900/80 to-slate-800 shadow-2xl shadow-blue-900/30
+  {{ else }}
+    border-slate-700/50 bg-slate-800/50
+  {{ end }}">
+
+  <!-- Top Bar: Nama Loket & Status -->
+  <div class="flex justify-between items-center px-7 pt-7 pb-4">
+    <div>
+      <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mb-0.5">Loket</p>
+      <p class="text-white font-black text-lg leading-tight">{{ .Counter.Name }}</p>
+    </div>
+    <div class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider
+      {{ if .Queue }}
+        bg-blue-500 text-white shadow-lg shadow-blue-500/40
+      {{ else }}
+        bg-slate-700 text-slate-500
+      {{ end }}">
+      {{ if .Queue }}
+        <span class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+          Memanggil
+        </span>
+      {{ else }}
+        Standby
+      {{ end }}
+    </div>
+  </div>
+
+  <!-- Nomor Antrian -->
+  <div class="text-center px-7 pb-7 pt-2">
+    {{ if .Queue }}
+      <!-- Efek glow di belakang nomor -->
+      <div class="relative inline-block">
+        <div class="absolute inset-0 blur-2xl opacity-40 text-blue-400 text-[7rem] font-black leading-none select-none pointer-events-none" aria-hidden="true">
+          {{ .Queue.QueueNumber }}
         </div>
-    </div>
-    
-    <div class="text-center py-6">
-        {{ if .Queue }}
-            <div class="text-7xl font-black text-white tracking-tighter mb-2">{{ .Queue.QueueNumber }}</div>
-            <div class="text-blue-400 font-bold uppercase tracking-widest text-sm">Segera Menuju Loket</div>
-        {{ else }}
-            <div class="text-5xl font-black text-slate-700 tracking-tighter mb-2">—</div>
-            <div class="text-slate-600 font-bold uppercase tracking-widest text-sm">Menunggu Antrian</div>
-        {{ end }}
-    </div>
+        <div class="relative text-[6rem] font-black text-white tracking-tighter leading-none">
+          {{ .Queue.QueueNumber }}
+        </div>
+      </div>
+      <div class="text-blue-300 font-bold uppercase tracking-[0.25em] text-sm mt-2">
+        Silakan Menuju Loket
+      </div>
+    {{ else }}
+      <div class="text-[5rem] font-black text-slate-700 tracking-tighter leading-none py-4">—</div>
+      <div class="text-slate-600 font-bold uppercase tracking-[0.2em] text-sm">Menunggu Antrian</div>
+    {{ end }}
+  </div>
+
+  <!-- Garis aksen bawah berwarna -->
+  {{ if .Queue }}
+  <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-400 to-blue-500"></div>
+  {{ end }}
 </div>
 {{ end }}
