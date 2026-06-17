@@ -4,6 +4,7 @@ import (
 	"AntrianSPMB/internal/models"
 	"AntrianSPMB/internal/repository"
 	"AntrianSPMB/internal/services"
+	"fmt"
 	"log"
 
 	"gorm.io/gorm"
@@ -15,52 +16,98 @@ func SeedAll(db *gorm.DB, ur repository.UserRepository, cr repository.CounterRep
 
 	// 1. Daftar User yang akan dibuat
 	users := []models.User{
-		{Username: "info1", FullName: "Petugas Informasi 1", Role: models.RoleStaffInfo},
-		{Username: "akun1", FullName: "Petugas Akun 1", Role: models.RoleStaffAccount},
-		{Username: "akun2", FullName: "Petugas Akun 2", Role: models.RoleStaffAccount},
-		{Username: "verif1", FullName: "Petugas Pendaftaran 1", Role: models.RoleStaffInput},
-		{Username: "input1", FullName: "Petugas Input Data 1", Role: models.RoleStaffInput},
+		{Username: "info1", FullName: "Loket 1 Informasi", Role: models.RoleStaffInfo},
+		{Username: "loket1akun", FullName: "Loket 1 Akun", Role: models.RoleStaffAccount},
+		{Username: "loket2akun", FullName: "Loket 2 Akun", Role: models.RoleStaffAccount},
+		{Username: "loket3akun", FullName: "Loket 3 Akun", Role: models.RoleStaffAccount},
+		{Username: "loket4akun", FullName: "Loket 4 Akun", Role: models.RoleStaffAccount},
+		{Username: "loket5akun", FullName: "Loket 5 Akun", Role: models.RoleStaffAccount},
+		{Username: "loket6akun", FullName: "Loket 6 Akun", Role: models.RoleStaffAccount},
+		{Username: "spensa_1", FullName: "Loket 1 Pendaftaran", Role: models.RoleStaffInput},
+		{Username: "spensa_2", FullName: "Loket 2 Pendaftaran", Role: models.RoleStaffInput},
+		{Username: "spensa_3", FullName: "Loket 3 Pendaftaran", Role: models.RoleStaffInput},
+		{Username: "spensa_4", FullName: "Loket 4 Pendaftaran", Role: models.RoleStaffInput},
+		{Username: "spensa_5", FullName: "Loket 5 Pendaftaran", Role: models.RoleStaffInput},
+		{Username: "spensa_6", FullName: "Loket 6 Pendaftaran", Role: models.RoleStaffInput},
 		{Username: "admin", FullName: "Administrator Utama", Role: models.RoleAdmin},
 	}
 
 	for _, u := range users {
 		existing, _ := ur.FindByUsername(u.Username)
+		hashed, _ := as.HashPassword("spensa162")
+		u.Password = hashed
 		if existing == nil {
-			hashed, _ := as.HashPassword("password123")
-			u.Password = hashed
 			ur.Create(&u)
 			log.Printf("✅ User '%s' berhasil dibuat\n", u.Username)
+		} else {
+			// Update password dan data untuk user yang sudah ada
+			existing.Password = hashed
+			existing.FullName = u.FullName
+			existing.Role = u.Role
+			db.Save(existing)
+			log.Printf("✅ User '%s' berhasil diperbarui\n", u.Username)
 		}
 	}
 
 	// 2. Daftar Loket yang akan dibuat
-	uInfo1, _ := ur.FindByUsername("info1")
-	uAkun1, _ := ur.FindByUsername("akun1")
-	uAkun2, _ := ur.FindByUsername("akun2")
-	uVerif1, _ := ur.FindByUsername("verif1")
-	uInput1, _ := ur.FindByUsername("input1")
+	var counters []models.Counter
 
-	var staffID1, staffID2, staffID3, staffID4, staffID5 *uint
-	if uInfo1 != nil { staffID1 = &uInfo1.ID }
-	if uAkun1 != nil { staffID2 = &uAkun1.ID }
-	if uAkun2 != nil { staffID3 = &uAkun2.ID }
-	if uVerif1 != nil { staffID4 = &uVerif1.ID }
-	if uInput1 != nil { staffID5 = &uInput1.ID }
+	// Loket 1 Informasi
+	var infoStaff *uint
+	if uInfo, err := ur.FindByUsername("info1"); err == nil && uInfo != nil {
+		infoStaff = &uInfo.ID
+	}
+	counters = append(counters, models.Counter{
+		ID: 1, Name: "Loket 01 - Informasi", RoomType: models.StepInfoRoom, IsActive: true, StaffID: infoStaff,
+	})
 
-	counters := []models.Counter{
-		{ID: 1, Name: "Loket 01 - Informasi", RoomType: models.StepInfoRoom, IsActive: true, StaffID: staffID1},
-		{ID: 2, Name: "Loket 02 - Akun", RoomType: models.StepAccountRoom, IsActive: true, StaffID: staffID2},
-		{ID: 3, Name: "Loket 03 - Akun", RoomType: models.StepAccountRoom, IsActive: true, StaffID: staffID3},
-		{ID: 4, Name: "Loket 04 - Pendaftaran", RoomType: models.StepInputRoom, IsActive: true, StaffID: staffID4},
-		{ID: 5, Name: "Loket 05 - Input Data", RoomType: models.StepInputRoom, IsActive: true, StaffID: staffID5},
+	// Loket Akun 1..6 (IDs: 2..7)
+	for i := 1; i <= 6; i++ {
+		username := fmt.Sprintf("loket%dakun", i)
+		var staffID *uint
+		if u, err := ur.FindByUsername(username); err == nil && u != nil {
+			staffID = &u.ID
+		}
+		counters = append(counters, models.Counter{
+			ID:       uint(i + 1),
+			Name:     fmt.Sprintf("Loket %02d - Pembuatan Akun", i + 1),
+			RoomType: models.StepAccountRoom,
+			IsActive: true,
+			StaffID:  staffID,
+		})
+	}
+
+	// Loket Pendaftaran 1..6 (IDs: 8..13)
+	for i := 1; i <= 6; i++ {
+		username := fmt.Sprintf("spensa_%d", i)
+		var staffID *uint
+		if u, err := ur.FindByUsername(username); err == nil && u != nil {
+			staffID = &u.ID
+		}
+		counters = append(counters, models.Counter{
+			ID:       uint(i + 7),
+			Name:     fmt.Sprintf("Loket %02d - Pendaftaran Sekolah", i + 7),
+			RoomType: models.StepInputRoom,
+			IsActive: true,
+			StaffID:  staffID,
+		})
 	}
 
 	for _, c := range counters {
-		var count int64
-		db.Model(&models.Counter{}).Where("id = ?", c.ID).Count(&count)
-		if count == 0 {
+		var existing models.Counter
+		err := db.First(&existing, c.ID).Error
+		if err != nil {
+			// Belum ada, buat baru
 			db.Create(&c)
 			log.Printf("✅ Loket '%s' berhasil dibuat\n", c.Name)
+		} else {
+			// Update loket yang sudah ada agar sesuai mapping baru
+			existing.Name = c.Name
+			existing.RoomType = c.RoomType
+			existing.StaffID = c.StaffID
+			existing.IsActive = c.IsActive
+			db.Save(&existing)
+			log.Printf("✅ Loket '%s' berhasil diperbarui\n", c.Name)
 		}
 	}
 

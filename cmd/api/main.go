@@ -63,9 +63,9 @@ func main() {
 
 	// 8. Inisialisasi Fiber App
 	app := fiber.New(fiber.Config{
-		Views:       engine,
-		ViewsLayout: "layouts/main",
-		AppName:     "SPMB Antrian SMP Negeri 1 Sragen",
+		Views:                    engine,
+		ViewsLayout:              "layouts/main",
+		AppName:                  "SPMB Antrian SMP Negeri 1 Sragen",
 		// Penting untuk VPS/Nginx: Mengizinkan Fiber membaca header X-Forwarded-*
 		ProxyHeader: "X-Forwarded-For",
 	})
@@ -73,6 +73,19 @@ func main() {
 	// 9. Middleware Global
 	app.Use(logger.New())
 	app.Use(recover.New())
+
+	// Middleware untuk membersihkan double-slash di awal path (contoh: //track/... -> /track/...)
+	app.Use(func(c *fiber.Ctx) error {
+		path := c.Path()
+		if strings.HasPrefix(path, "//") {
+			cleanedPath := "/" + strings.TrimLeft(path, "/")
+			if len(c.Request().URI().QueryString()) > 0 {
+				cleanedPath += "?" + string(c.Request().URI().QueryString())
+			}
+			return c.Redirect(cleanedPath, fiber.StatusMovedPermanently)
+		}
+		return c.Next()
+	})
 
 	// 10. Menyajikan File Statis
 	app.Static("/assets", "./public/assets")
@@ -133,9 +146,9 @@ func main() {
 			roomLabel = "Ruang Pembuatan Akun"
 			roomClass = "room-account"
 		case "INPUT_ROOM":
-			title = "Monitor Input Data"
+			title = "Monitor Pendaftaran Sekolah"
 			isSpecificRoom = true
-			roomLabel = "Ruang Input & Verifikasi Data"
+			roomLabel = "Pendaftaran Sekolah"
 			roomClass = "room-input"
 		default:
 			title = "Monitor Antrian Utama"
@@ -169,7 +182,7 @@ func main() {
 		case "ACCOUNT_ROOM":
 			roomLabel, roomClass, queuePrefix = "Pembuatan Akun", "bg-violet-600", "A"
 		case "INPUT_ROOM":
-			roomLabel, roomClass, queuePrefix = "Input Data & Verifikasi", "bg-emerald-600", "D"
+			roomLabel, roomClass, queuePrefix = "Pendaftaran Sekolah", "bg-emerald-600", "D"
 		default:
 			return c.Redirect("/panggilan")
 		}
@@ -302,7 +315,7 @@ func main() {
 			roomLabel, roomClass, queuePrefix = "Pembuatan Akun", "bg-violet-600", "A"
 		case "INPUT_ROOM":
 			step = models.StepInputRoom
-			roomLabel, roomClass, queuePrefix = "Input Data & Verifikasi", "bg-emerald-600", "D"
+			roomLabel, roomClass, queuePrefix = "Pendaftaran Sekolah", "bg-emerald-600", "D"
 		default:
 			return c.Status(fiber.StatusBadRequest).SendString("Ruangan tidak valid")
 		}
@@ -348,6 +361,8 @@ func main() {
 			}
 		}
 		
+		// Bersihkan trailing slash jika ada untuk menghindari double slash (//track/...)
+		baseURL = strings.TrimSuffix(baseURL, "/")
 		trackURL := fmt.Sprintf("%s/track/%s", baseURL, ticketID)
 		
 		// Generate QR Code secara lokal tanpa bergantung pada internet/API eksternal
@@ -435,7 +450,7 @@ func getRoomInfo(roomType string) (label, cssClass, prefix string) {
 	case "ACCOUNT_ROOM":
 		return "Ruang Pembuatan Akun", "room-account", "A"
 	case "INPUT_ROOM":
-		return "Ruang Input Data", "room-input", "D"
+		return "Pendaftaran Sekolah", "room-input", "D"
 	default: // INFO_ROOM
 		return "Ruang Informasi", "room-info", "I"
 	}

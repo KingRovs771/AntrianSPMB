@@ -56,13 +56,13 @@
     <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mb-3">
       <span class="text-emerald-700 font-black text-sm">D</span>
     </div>
-    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Input & Verifikasi</span>
+    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pendaftaran Sekolah</span>
     <span class="text-3xl font-black text-emerald-700 mt-2">{{ .InputActive }}</span>
     
     {{ if ne .InputActive "Belum Ada" }}
     <!-- Play Audio Button -->
     <button 
-      onclick="speakQueue('{{ .InputActive }}', 'Ruang Input Data')" 
+      onclick="speakQueue('{{ .InputActive }}', 'Pendaftaran Sekolah')" 
       class="mt-4 flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
