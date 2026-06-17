@@ -55,5 +55,9 @@ func (r *userRepo) Update(user *models.User) error {
 }
 
 func (r *userRepo) Delete(id uint) error {
+	// Putuskan relasi dari tabel counters agar tidak terjadi error foreign key constraint
+	if err := r.db.Model(&models.Counter{}).Where("staff_id = ?", id).Update("staff_id", nil).Error; err != nil {
+		return err
+	}
 	return r.db.Delete(&models.User{}, id).Error
 }
