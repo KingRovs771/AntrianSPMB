@@ -40,12 +40,19 @@ func SeedAll(db *gorm.DB, ur repository.UserRepository, cr repository.CounterRep
 	uVerif1, _ := ur.FindByUsername("verif1")
 	uInput1, _ := ur.FindByUsername("input1")
 
+	var staffID1, staffID2, staffID3, staffID4, staffID5 *uint
+	if uInfo1 != nil { staffID1 = &uInfo1.ID }
+	if uAkun1 != nil { staffID2 = &uAkun1.ID }
+	if uAkun2 != nil { staffID3 = &uAkun2.ID }
+	if uVerif1 != nil { staffID4 = &uVerif1.ID }
+	if uInput1 != nil { staffID5 = &uInput1.ID }
+
 	counters := []models.Counter{
-		{ID: 1, Name: "Loket 01 - Informasi", RoomType: models.StepInfoRoom, IsActive: true, StaffID: &uInfo1.ID},
-		{ID: 2, Name: "Loket 02 - Akun", RoomType: models.StepAccountRoom, IsActive: true, StaffID: &uAkun1.ID},
-		{ID: 3, Name: "Loket 03 - Akun", RoomType: models.StepAccountRoom, IsActive: true, StaffID: &uAkun2.ID},
-		{ID: 4, Name: "Loket 04 - Verifikasi", RoomType: models.StepInputRoom, IsActive: true, StaffID: &uVerif1.ID},
-		{ID: 5, Name: "Loket 05 - Input Data", RoomType: models.StepInputRoom, IsActive: true, StaffID: &uInput1.ID},
+		{ID: 1, Name: "Loket 01 - Informasi", RoomType: models.StepInfoRoom, IsActive: true, StaffID: staffID1},
+		{ID: 2, Name: "Loket 02 - Akun", RoomType: models.StepAccountRoom, IsActive: true, StaffID: staffID2},
+		{ID: 3, Name: "Loket 03 - Akun", RoomType: models.StepAccountRoom, IsActive: true, StaffID: staffID3},
+		{ID: 4, Name: "Loket 04 - Verifikasi", RoomType: models.StepInputRoom, IsActive: true, StaffID: staffID4},
+		{ID: 5, Name: "Loket 05 - Input Data", RoomType: models.StepInputRoom, IsActive: true, StaffID: staffID5},
 	}
 
 	for _, c := range counters {

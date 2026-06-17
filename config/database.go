@@ -4,6 +4,7 @@ import (
 	"AntrianSPMB/internal/models"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -28,6 +29,8 @@ func ConnectDatabase() *gorm.DB {
 		// Jika DATABASE_URL tidak ada, coba cek DB_DSN sebagai fallback kedua
 		dsn = os.Getenv("DB_DSN")
 	}
+
+	dsn = strings.Trim(dsn, "\"'")
 
 	if dsn == "" {
 		// Nilai fallback default jika di .env tidak disetel
