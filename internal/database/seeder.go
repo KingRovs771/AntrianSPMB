@@ -18,7 +18,7 @@ func SeedAll(db *gorm.DB, ur repository.UserRepository, cr repository.CounterRep
 		{Username: "info1", FullName: "Petugas Informasi 1", Role: models.RoleStaffInfo},
 		{Username: "akun1", FullName: "Petugas Akun 1", Role: models.RoleStaffAccount},
 		{Username: "akun2", FullName: "Petugas Akun 2", Role: models.RoleStaffAccount},
-		{Username: "verif1", FullName: "Petugas Verifikasi 1", Role: models.RoleStaffInput},
+		{Username: "verif1", FullName: "Petugas Pendaftaran 1", Role: models.RoleStaffInput},
 		{Username: "input1", FullName: "Petugas Input Data 1", Role: models.RoleStaffInput},
 		{Username: "admin", FullName: "Administrator Utama", Role: models.RoleAdmin},
 	}
@@ -51,7 +51,7 @@ func SeedAll(db *gorm.DB, ur repository.UserRepository, cr repository.CounterRep
 		{ID: 1, Name: "Loket 01 - Informasi", RoomType: models.StepInfoRoom, IsActive: true, StaffID: staffID1},
 		{ID: 2, Name: "Loket 02 - Akun", RoomType: models.StepAccountRoom, IsActive: true, StaffID: staffID2},
 		{ID: 3, Name: "Loket 03 - Akun", RoomType: models.StepAccountRoom, IsActive: true, StaffID: staffID3},
-		{ID: 4, Name: "Loket 04 - Verifikasi", RoomType: models.StepInputRoom, IsActive: true, StaffID: staffID4},
+		{ID: 4, Name: "Loket 04 - Pendaftaran", RoomType: models.StepInputRoom, IsActive: true, StaffID: staffID4},
 		{ID: 5, Name: "Loket 05 - Input Data", RoomType: models.StepInputRoom, IsActive: true, StaffID: staffID5},
 	}
 

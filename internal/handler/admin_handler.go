@@ -33,7 +33,7 @@ func (h *AdminHandler) Dashboard(c *fiber.Ctx) error {
 	})
 }
 
-// User List View
+// User List View (Full Page)
 func (h *AdminHandler) UserList(c *fiber.Ctx) error {
 	users, err := h.userService.GetAllUsers()
 	if err != nil {
@@ -47,6 +47,16 @@ func (h *AdminHandler) UserList(c *fiber.Ctx) error {
 	})
 }
 
+// userRowsPartial renders just the <tr> rows for HTMX partial swap
+func (h *AdminHandler) userRowsPartial(c *fiber.Ctx) error {
+	users, err := h.userService.GetAllUsers()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+	// Render partial with empty layout so only the rows are returned
+	return c.Render("partials/admin_user_rows", users, "")
+}
+
 // Create User
 func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 	user := new(models.User)
@@ -58,7 +68,7 @@ func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return h.UserList(c) // Return the updated list via HTMX or full render
+	return h.userRowsPartial(c)
 }
 
 // Update User
@@ -74,7 +84,7 @@ func (h *AdminHandler) UpdateUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return h.UserList(c)
+	return h.userRowsPartial(c)
 }
 
 // Delete User
@@ -84,7 +94,7 @@ func (h *AdminHandler) DeleteUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return h.UserList(c)
+	return h.userRowsPartial(c)
 }
 
 // Reset Queue
@@ -97,7 +107,7 @@ func (h *AdminHandler) ResetQueue(c *fiber.Ctx) error {
 
 func (h *AdminHandler) SetupAdminRoutes(router fiber.Router) {
 	admin := router.Group("/admin", AuthMiddleware(), RoleMiddleware("ADMIN"))
-	
+
 	admin.Get("/dashboard", h.Dashboard)
 	admin.Get("/users", h.UserList)
 	admin.Post("/users", h.CreateUser)
@@ -105,3 +115,4 @@ func (h *AdminHandler) SetupAdminRoutes(router fiber.Router) {
 	admin.Delete("/users/:id", h.DeleteUser)
 	admin.Post("/reset", h.ResetQueue)
 }
+
