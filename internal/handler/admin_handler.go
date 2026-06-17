@@ -3,6 +3,7 @@ package handler
 import (
 	"AntrianSPMB/internal/models"
 	"AntrianSPMB/internal/services"
+	"AntrianSPMB/pkg/sse"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,12 +12,14 @@ import (
 type AdminHandler struct {
 	userService  service.UserService
 	queueService service.QueueService
+	sseManager   *sse.Manager
 }
 
-func NewAdminHandler(us service.UserService, qs service.QueueService) *AdminHandler {
+func NewAdminHandler(us service.UserService, qs service.QueueService, sm *sse.Manager) *AdminHandler {
 	return &AdminHandler{
 		userService:  us,
 		queueService: qs,
+		sseManager:   sm,
 	}
 }
 
@@ -102,6 +105,13 @@ func (h *AdminHandler) ResetQueue(c *fiber.Ctx) error {
 	if err := h.queueService.ResetQueues(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
+
+	// Broadcast SSE ke Monitor TV dan HP Murid
+	if h.sseManager != nil {
+		h.sseManager.Broadcast("monitor_active", "trigger", nil)
+		h.sseManager.Broadcast("all", "status_updated", nil)
+	}
+
 	return c.SendStatus(fiber.StatusOK)
 }
 

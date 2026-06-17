@@ -236,7 +236,10 @@ func (h *LoketHandler) ResetQueues(c *fiber.Ctx) error {
 	}
 
 	// Beritahu semua client (Monitor, Dashboard, dll) untuk refresh
-	h.sseManager.Broadcast("monitor_active", "trigger", nil)
+	if h.sseManager != nil {
+		h.sseManager.Broadcast("monitor_active", "trigger", nil)
+		h.sseManager.Broadcast("all", "status_updated", nil)
+	}
 	c.Set("HX-Trigger", "queueUpdated")
 
 	return c.SendString("Antrian Berhasil Direset")

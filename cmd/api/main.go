@@ -55,7 +55,7 @@ func main() {
 	loketHandler := handler.NewLoketHandler(counterService, queueService, sseManager)
 	monitorHandler := handler.NewMonitorHandler(queueService, counterService)
 	authHandler := handler.NewAuthHandler(authService)
-	adminHandler := handler.NewAdminHandler(userService, queueService)
+	adminHandler := handler.NewAdminHandler(userService, queueService, sseManager)
 
 	// 7. Konfigurasi Template Engine (HTML Render)
 	engine := html.New("./views", ".html")
