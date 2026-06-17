@@ -151,32 +151,37 @@
 
     function openAddModal() {
         modalTitle.innerText = "Tambah Petugas Baru";
+
+        // BUG FIX: Hapus hx-put sebelum set hx-post agar tidak konflik
+        form.removeAttribute('hx-put');
         form.setAttribute('hx-post', '/admin/users');
         form.reset();
         inputPassword.setAttribute('required', 'required');
         passwordHint.classList.add('hidden');
         htmx.process(form);
-        
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.classList.add('opacity-100');
-            modal.querySelector('div').classList.remove('scale-95');
-            modal.querySelector('div').classList.add('scale-100');
-        }, 10);
+
+        showModal();
     }
 
     function openEditModal(id, fullName, username, role) {
         modalTitle.innerText = "Edit Petugas";
+
+        // BUG FIX: Hapus hx-post sebelum set hx-put agar tidak konflik
+        form.removeAttribute('hx-post');
         form.setAttribute('hx-put', `/admin/users/${id}`);
         inputPassword.removeAttribute('required');
         passwordHint.classList.remove('hidden');
-        
+
         document.getElementById('inputFullName').value = fullName;
         document.getElementById('inputUsername').value = username;
         document.getElementById('inputRole').value = role;
-        
-        htmx.process(form);
+        document.getElementById('inputPassword').value = '';
 
+        htmx.process(form);
+        showModal();
+    }
+
+    function showModal() {
         modal.classList.remove('hidden');
         setTimeout(() => {
             modal.classList.add('opacity-100');
@@ -191,11 +196,20 @@
         modal.querySelector('div').classList.add('scale-95');
         setTimeout(() => {
             modal.classList.add('hidden');
+            form.reset();
         }, 300);
     }
 
     // Close modal on escape
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeModal();
+    });
+
+    // BUG FIX: Setelah HTMX swap body, re-bind event agar script modal aktif kembali
+    // tanpa perlu refresh halaman
+    document.body.addEventListener('htmx:afterSwap', function (evt) {
+        if (evt.detail.target === document.body || evt.detail.target.tagName === 'BODY') {
+            closeModal();
+        }
     });
 </script>
