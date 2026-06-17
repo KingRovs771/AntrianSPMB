@@ -19,6 +19,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/template/html/v2"
 	"github.com/joho/godotenv"
+	"github.com/skip2/go-qrcode"
 )
 
 func main() {
@@ -348,9 +349,15 @@ func main() {
 		}
 		
 		trackURL := fmt.Sprintf("%s/track/%s", baseURL, ticketID)
-		qrAPI := fmt.Sprintf("https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=%s", trackURL)
 		
-		return c.Redirect(qrAPI)
+		// Generate QR Code secara lokal tanpa bergantung pada internet/API eksternal
+		png, err := qrcode.Encode(trackURL, qrcode.Medium, 256)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Gagal generate QR Code")
+		}
+
+		c.Set("Content-Type", "image/png")
+		return c.Send(png)
 	})
 
 	// --- Endpoint Print Antrian ---
